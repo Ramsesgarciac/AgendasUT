@@ -26,8 +26,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
-import { Notes } from "@/components/notes"
-import { CalendarComponent } from "@/components/calendar"
+import { Notes } from "@/app/notes/page"
+import { CalendarComponent } from "@/app/calendar/page"
 import { Area, Activity } from '@/types/area';
 import { useAreas } from '@/hooks/useAreas';
 import { useActividades } from '@/hooks/useActividades';
