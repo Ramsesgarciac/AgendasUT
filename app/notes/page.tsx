@@ -5,8 +5,6 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -16,12 +14,13 @@ import { useMemo } from 'react';
 import { NoteViewCard } from '@/components/cards/noteViewCard';
 import { NoteCreate } from '@/components/cards/noteCreate';
 import { NoteEdit } from '@/components/cards/noteEdit';
+import { NoteDelete } from '@/components/cards/noteDelete';
 import { Nota } from '@/types/nota';
 import { useAreas } from '@/hooks/useAreas';
 
 
 export function Notes() {
-  const { notas, handleCreateNote, handleEditNote } = useNotas();
+  const { notas, handleCreateNote, handleEditNote, deleteNotaState } = useNotas();
   const { areas } = useAreas();
   const [notes, setNotes] = useState<Nota[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -29,6 +28,8 @@ export function Notes() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedNota, setSelectedNota] = useState<Nota | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [notaToDelete, setNotaToDelete] = useState<Nota | null>(null)
   const [newNote, setNewNote] = useState({ title: "", content: "", area: "" })
   const [editNote, setEditNote] = useState({ title: "", content: "", area: "" })
   const [selectedMonth, setSelectedMonth] = useState<string>("all")
@@ -95,9 +96,18 @@ export function Notes() {
     setIsEditDialogOpen(true);
   };
 
-  const handleDeleteNote = (noteId: number, e: React.MouseEvent) => {
+  const handleDeleteNote = (nota: Nota, e: React.MouseEvent) => {
     e.stopPropagation()
-    setNotes(notes.filter((note) => note.id !== noteId))
+    setNotaToDelete(nota)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (notaToDelete) {
+      await deleteNotaState(notaToDelete.id)
+      setIsDeleteDialogOpen(false)
+      setNotaToDelete(null)
+    }
   }
 
   const handleCardClick = (note: Nota) => {
@@ -183,7 +193,7 @@ export function Notes() {
                     variant="outline"
                     size="sm"
                     className="flex-1 h-8 text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent"
-                    onClick={(e) => handleDeleteNote(note.id, e)}
+                    onClick={(e) => handleDeleteNote(note, e)}
                   >
                     <Trash2 className="w-3 h-3 mr-1" />
                     Eliminar
@@ -216,6 +226,13 @@ export function Notes() {
           />
         )}
       </Dialog>
+
+      <NoteDelete
+        nota={notaToDelete}
+        isDeleteDialogOpen={isDeleteDialogOpen}
+        setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+        onConfirmDelete={confirmDelete}
+      />
     </div>
   )
 }

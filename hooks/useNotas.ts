@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getNotas, createNota, updateNota } from '../lib/services/notaService';
+import { getNotas, createNota, updateNota, deleteNota } from '../lib/services/notaService';
 import { Nota } from '../types/nota';
 
 export const useNotas = () => {
@@ -36,6 +36,15 @@ export const useNotas = () => {
       setNotas(prev => prev.map(nota => nota.id === id ? updatedNota : nota));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update nota');
+    }
+  };
+
+  const deleteNotaState = async (id: number) => {
+    try {
+      await deleteNota(id);
+      setNotas(prev => prev.filter(nota => nota.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete nota');
     }
   };
 
@@ -77,5 +86,5 @@ export const useNotas = () => {
     }
   };
 
-  return { notas, loading, error, addNota, handleCreateNote, handleEditNote };
+  return { notas, loading, error, addNota, handleCreateNote, handleEditNote, deleteNotaState };
 };

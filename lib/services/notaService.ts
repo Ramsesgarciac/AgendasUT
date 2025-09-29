@@ -60,3 +60,16 @@ export const updateNota = async (id: number, notaData: { nombre: string; nota: s
     area: data.area ? { ...data.area, name: data.area.nombre } : data.area,
   };
 };
+
+export const deleteNota = async (id: number): Promise<void> => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const response = await fetch(`/api/notas/${id}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': token ? `Bearer ${token}` : '',
+    },
+  });
+  if (!response.ok) {
+    throw new Error('Failed to delete nota');
+  }
+};
