@@ -30,11 +30,14 @@ export function Notes() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedNota, setSelectedNota] = useState<Nota | null>(null)
   const [newNote, setNewNote] = useState({ title: "", content: "", area: "" })
+  const [editNote, setEditNote] = useState({ title: "", content: "", area: "" })
   const [selectedMonth, setSelectedMonth] = useState<string>("all")
 
+  const fixedNotas = useMemo(() => notas.map(nota => ({ ...nota, area: areas.find(a => a.id === nota.area.id) || nota.area })), [notas, areas])
+
   useEffect(() => {
-    setNotes(notas)
-  }, [notas])
+    setNotes(fixedNotas)
+  }, [fixedNotas])
 
   const getMonthFromDate = (date: Date) => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
@@ -81,14 +84,14 @@ export function Notes() {
 
   const handleEditNoteLocal = () => {
     if (selectedNota) {
-      handleEditNote(selectedNota, newNote, areas, setNewNote, setIsEditDialogOpen);
+      handleEditNote(selectedNota, editNote, areas, setEditNote, setIsEditDialogOpen);
     }
   };
 
   const openEditDialog = (note: Nota, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedNota(note);
-    setNewNote({ title: note.nombre, content: note.nota, area: note.area.name });
+    setEditNote({ title: note.nombre, content: note.nota, area: note.area.name });
     setIsEditDialogOpen(true);
   };
 
@@ -204,8 +207,8 @@ export function Notes() {
         {selectedNota && (
           <NoteEdit
             nota={selectedNota}
-            newNote={newNote}
-            setNewNote={setNewNote}
+            newNote={editNote}
+            setNewNote={setEditNote}
             areas={areas}
             handleEditNoteLocal={handleEditNoteLocal}
             isEditDialogOpen={isEditDialogOpen}
