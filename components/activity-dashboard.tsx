@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -30,6 +30,7 @@ import { Notes } from "@/components/notes"
 import { CalendarComponent } from "@/components/calendar"
 import { Area, Activity } from '@/types/area';
 import { useAreas } from '@/hooks/useAreas';
+import { useActividades } from '@/hooks/useActividades';
 
 const getColorClasses = (color: Area["color"]) => {
   const colorMap = {
@@ -44,7 +45,8 @@ const getColorClasses = (color: Area["color"]) => {
 
 export default function ActivityDashboard() {
   const { areas, loading, error } = useAreas();
-  const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([])
+  const { actividades } = useActividades();
+  const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
@@ -81,7 +83,9 @@ export default function ActivityDashboard() {
     }
   }, [areas]);
 
-  const filteredAreas = selectedAreaIds.length === 0 ? [] : areas.filter((area) => selectedAreaIds.includes(area.id))
+  const areasWithActivities = useMemo(() => areas.map(area => ({ ...area, activities: actividades.filter(act => act.area.id === area.id).map(act => ({ id: act.id.toString(), subject: act.asunto, date: new Date(act.fechaLimite).toISOString().split('T')[0] })) })), [areas, actividades]);
+
+  const filteredAreas = selectedAreaIds.length === 0 ? [] : areasWithActivities.filter((area) => selectedAreaIds.includes(area.id))
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -92,12 +96,12 @@ export default function ActivityDashboard() {
     })
   }
 
-  const handleAreaToggle = (areaId: string) => {
+  const handleAreaToggle = (areaId: number) => {
     setSelectedAreaIds((prev) => (prev.includes(areaId) ? prev.filter((id) => id !== areaId) : [...prev, areaId]))
   }
 
   const handleSelectAll = () => {
-    setSelectedAreaIds(areas.map((area) => area.id))
+    setSelectedAreaIds(areasWithActivities.map((area) => area.id))
   }
 
   const handleClearAll = () => {
@@ -106,9 +110,9 @@ export default function ActivityDashboard() {
 
   const getSelectedAreasText = () => {
     if (selectedAreaIds.length === 0) return "Ningún área seleccionada"
-    if (selectedAreaIds.length === areas.length) return "Todas las áreas"
+    if (selectedAreaIds.length === areasWithActivities.length) return "Todas las áreas"
     if (selectedAreaIds.length === 1) {
-      const area = areas.find((a) => a.id === selectedAreaIds[0])
+      const area = areasWithActivities.find((a) => a.id === selectedAreaIds[0])
       return area?.name || ""
     }
     return `${selectedAreaIds.length} áreas seleccionadas`
@@ -396,7 +400,7 @@ export default function ActivityDashboard() {
                       </div>
                     </div>
                     <div className="max-h-[300px] overflow-y-auto">
-                      {areas.map((area) => (
+                      {areasWithActivities.map((area) => (
                         <div
                           key={area.id}
                           className="flex items-center space-x-2 p-3 hover:bg-muted/50 cursor-pointer"
@@ -456,8 +460,8 @@ export default function ActivityDashboard() {
                                 <SelectValue placeholder="Selecciona un área" />
                               </SelectTrigger>
                               <SelectContent>
-                                {areas.map((area) => (
-                                  <SelectItem key={area.id} value={area.id}>
+                                {areasWithActivities.map((area) => (
+                                  <SelectItem key={area.id} value={area.id.toString()}>
                                     {area.name}
                                   </SelectItem>
                                 ))}

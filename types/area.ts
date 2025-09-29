@@ -5,7 +5,7 @@ export interface Activity {
 }
 
 export interface Area {
-  id: string;
+  id: number;
   name: string;
   activities: Activity[];
   color: "primary" | "secondary" | "accent" | "chart-4" | "chart-5";

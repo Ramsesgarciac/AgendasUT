@@ -15,7 +15,7 @@ export const getAreas = async (): Promise<Area[]> => {
   }
   const data = await response.json();
   return data.map((area: any, index: number) => ({
-    id: area.id.toString(),
+    id: area.id,
     name: area.nombre,
     activities: area.actividades || [],
     color: colors[index % colors.length],
