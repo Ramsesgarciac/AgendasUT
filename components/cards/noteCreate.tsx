@@ -32,18 +32,39 @@ export function NoteCreate({ newNote, setNewNote, areas, handleCreateNoteLocal, 
           onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
           className="min-h-[100px]"
         />
-        <Select value={newNote.area} onValueChange={(value) => setNewNote({ ...newNote, area: value })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Seleccionar área" />
-          </SelectTrigger>
-          <SelectContent>
-            {areas.map((area) => (
-              <SelectItem key={area.id} value={area.name}>
-                {area.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+
+        <div className="flex gap-2 pt-2">
+          <div className="flex-1">
+            <Select value={newNote.area} onValueChange={(value) => setNewNote({ ...newNote, area: value })}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar área" />
+              </SelectTrigger>
+              <SelectContent>
+                {areas.map((area) => (
+                  <SelectItem key={area.id} value={area.name}>
+                    {area.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex-1">
+            <Select value={newNote.area} onValueChange={(value) => setNewNote({ ...newNote, area: value })}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Seleccionar área" />
+              </SelectTrigger>
+              <SelectContent>
+                {areas.map((area) => (
+                  <SelectItem key={area.id} value={area.name}>
+                    {area.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <div className="flex gap-2 pt-2">
           <Button onClick={handleCreateNoteLocal} className="flex-1">
             Guardar

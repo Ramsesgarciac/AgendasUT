@@ -1,11 +1,7 @@
 import { Area } from './area';
+import { TipoActividad } from './tipoActividad';
 
 export interface Usuario {
-  id: number;
-  // Add other fields as needed
-}
-
-export interface TipoActividad {
   id: number;
   // Add other fields as needed
 }
