@@ -8,7 +8,9 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Plus, StickyNote, Edit, Trash2 } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Plus, StickyNote, Edit, Trash2, ChevronDown } from "lucide-react"
 import { useNotas } from '@/hooks/useNotas';
 import { useMemo } from 'react';
 import { NoteViewCard } from '@/components/cards/noteViewCard';
@@ -34,12 +36,19 @@ export function Notes() {
   const [newNote, setNewNote] = useState({ title: "", content: "", area: "", tipoActividad: "" })
   const [editNote, setEditNote] = useState({ title: "", content: "", area: "", tipoActividad: "" })
   const [selectedMonth, setSelectedMonth] = useState<string>("all")
+  const [selectedTipoActividadIds, setSelectedTipoActividadIds] = useState<number[]>([])
 
   const fixedNotas = useMemo(() => notas.map(nota => ({ ...nota, area: areas.find(a => a.id === nota.area.id) || nota.area })), [notas, areas])
 
   useEffect(() => {
     setNotes(fixedNotas)
   }, [fixedNotas])
+
+  useEffect(() => {
+    if (tipoActividades.length > 0) {
+      setSelectedTipoActividadIds(tipoActividades.map(ta => ta.id))
+    }
+  }, [tipoActividades])
 
   const getMonthFromDate = (date: Date) => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
@@ -56,8 +65,9 @@ export function Notes() {
     b.localeCompare(a),
   )
 
-  const filteredNotes =
-    selectedMonth === "all" ? notes : notes.filter((note) => getMonthFromDate(note.fechaCreacion) === selectedMonth)
+  const filteredNotes = notes
+    .filter((note) => selectedMonth === "all" || getMonthFromDate(note.fechaCreacion) === selectedMonth)
+    .filter((note) => selectedTipoActividadIds.length > 0 && Array.isArray(note.tiposActividad) && note.tiposActividad.some((ta) => selectedTipoActividadIds.includes(ta.id)))
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("es-ES", {
@@ -83,6 +93,28 @@ export function Notes() {
   }
 
   const handleCreateNoteLocal = () => handleCreateNote(newNote, areas, tipoActividades, setNewNote, setIsDialogOpen);
+
+  const handleTipoActividadToggle = (id: number) => {
+    setSelectedTipoActividadIds((prev) => (prev.includes(id) ? prev.filter((tipoId) => tipoId !== id) : [...prev, id]))
+  }
+
+  const handleSelectAllTipo = () => {
+    setSelectedTipoActividadIds(tipoActividades.map(ta => ta.id))
+  }
+
+  const handleClearAllTipo = () => {
+    setSelectedTipoActividadIds([])
+  }
+
+  const getSelectedTipoText = () => {
+    if (selectedTipoActividadIds.length === 0) return "Ningún tipo seleccionado"
+    if (selectedTipoActividadIds.length === tipoActividades.length) return "Todos los tipos"
+    if (selectedTipoActividadIds.length === 1) {
+      const tipo = tipoActividades.find((ta) => ta.id === selectedTipoActividadIds[0])
+      return tipo?.nombre || ""
+    }
+    return `${selectedTipoActividadIds.length} tipos seleccionados`
+  }
 
   const handleEditNoteLocal = () => {
     if (selectedNota) {
@@ -125,7 +157,7 @@ export function Notes() {
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger className="w-full sm:w-48 border border-border bg-transparent hover:bg-accent hover:text-accent-foreground rounded-md font-medium">
               <SelectValue placeholder="Filtrar por mes" />
             </SelectTrigger>
             <SelectContent>
@@ -137,6 +169,41 @@ export function Notes() {
               ))}
             </SelectContent>
           </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-full sm:w-[250px] justify-between bg-transparent">
+                <span className="truncate">{getSelectedTipoText()}</span>
+                <ChevronDown className="w-4 h-4 ml-2 flex-shrink-0" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[300px] p-0" align="end">
+              <div className="p-3 border-b border-border">
+                <div className="flex justify-between items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={handleSelectAllTipo} className="text-xs">
+                    Seleccionar todos
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={handleClearAllTipo} className="text-xs">
+                    Limpiar
+                  </Button>
+                </div>
+              </div>
+              <div className="max-h-[300px] overflow-y-auto">
+                {tipoActividades.map((tipo) => (
+                  <div
+                    key={tipo.id}
+                    className="flex items-center space-x-2 p-3 hover:bg-muted/50 cursor-pointer"
+                    onClick={() => handleTipoActividadToggle(tipo.id)}
+                  >
+                    <Checkbox
+                      checked={selectedTipoActividadIds.includes(tipo.id)}
+                      onChange={() => handleTipoActividadToggle(tipo.id)}
+                    />
+                    <span className="text-sm flex-1">{tipo.nombre}</span>
+                  </div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90 w-full sm:w-auto">
