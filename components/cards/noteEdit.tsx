@@ -5,18 +5,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button"
 import { Area } from "@/types/area"
 import { Nota } from "@/types/nota"
+import { TipoActividad } from "@/types/tipoActividad"
 
 interface NoteEditProps {
   nota: Nota
-  newNote: { title: string; content: string; area: string }
-  setNewNote: (note: { title: string; content: string; area: string }) => void
+  newNote: { title: string; content: string; area: string; tipoActividad: string }
+  setNewNote: (note: { title: string; content: string; area: string; tipoActividad: string }) => void
   areas: Area[]
+  tipoActividades: TipoActividad[]
   handleEditNoteLocal: () => void
   isEditDialogOpen: boolean
   setIsEditDialogOpen: (open: boolean) => void
 }
 
-export function NoteEdit({ nota, newNote, setNewNote, areas, handleEditNoteLocal, isEditDialogOpen, setIsEditDialogOpen }: NoteEditProps) {
+export function NoteEdit({ nota, newNote, setNewNote, areas, tipoActividades, handleEditNoteLocal, isEditDialogOpen, setIsEditDialogOpen }: NoteEditProps) {
   return (
     <DialogContent className="sm:max-w-md">
       <DialogHeader>
@@ -46,6 +48,7 @@ export function NoteEdit({ nota, newNote, setNewNote, areas, handleEditNoteLocal
             ))}
           </SelectContent>
         </Select>
+
         <div className="flex gap-2 pt-2">
           <Button onClick={handleEditNoteLocal} className="flex-1">
             Guardar

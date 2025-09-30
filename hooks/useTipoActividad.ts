@@ -10,9 +10,12 @@ export const useTipoActividad = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log('Fetching tipo actividades...');
         const data = await getTipoActividades();
+        console.log('Tipo actividades data:', data);
         setTipoActividades(data);
       } catch (err) {
+        console.error('Error fetching tipo actividades:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);

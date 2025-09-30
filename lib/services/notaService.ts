@@ -40,7 +40,7 @@ export const createNota = async (notaData: { nombre: string; nota: string; idUse
   };
 };
 
-export const updateNota = async (id: number, notaData: { nombre: string; nota: string; idArea: number }): Promise<Nota> => {
+export const updateNota = async (id: number, notaData: { nombre: string; nota: string; idArea: number; tipoActividadId: number; idUserCreate: number }): Promise<Nota> => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const response = await fetch(`/api/notas/${id}`, {
     method: 'PATCH',

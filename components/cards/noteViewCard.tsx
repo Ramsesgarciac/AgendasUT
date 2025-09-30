@@ -21,10 +21,17 @@ export function NoteViewCard({ selectedNote, isViewDialogOpen, setIsViewDialogOp
             {selectedNote && (
             <div className="space-y-4">
                 <div>
-                <h3 className="font-semibold text-lg mb-2">{selectedNote.nombre}</h3>
-                <Badge variant="outline" className={getAreaColor(selectedNote.area.name)}>
-                    {selectedNote.area.name}
-                </Badge>
+                    <h3 className="font-semibold text-lg mb-2">{selectedNote.nombre}</h3>
+                    <div className="flex gap-2">
+                        <Badge variant="outline" className={getAreaColor(selectedNote.area.name)}>
+                            {selectedNote.area.name}
+                        </Badge>
+                        {Array.isArray(selectedNote.tiposActividad) ? selectedNote.tiposActividad.map((tipo) => (
+                            <Badge key={tipo.id} variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                                {tipo.nombre}
+                            </Badge>
+                        )) : null}
+                    </div>
                 </div>
                 <div>
                 <h4 className="font-medium text-sm text-muted-foreground mb-2">Descripción:</h4>

@@ -17,11 +17,12 @@ import { NoteEdit } from '@/components/cards/noteEdit';
 import { NoteDelete } from '@/components/cards/noteDelete';
 import { Nota } from '@/types/nota';
 import { useAreas } from '@/hooks/useAreas';
-
+import { useTipoActividad } from '@/hooks/useTipoActividad';
 
 export function Notes() {
   const { notas, handleCreateNote, handleEditNote, deleteNotaState } = useNotas();
   const { areas } = useAreas();
+  const { tipoActividades } = useTipoActividad();
   const [notes, setNotes] = useState<Nota[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedNote, setSelectedNote] = useState<Nota | null>(null)
@@ -30,8 +31,8 @@ export function Notes() {
   const [selectedNota, setSelectedNota] = useState<Nota | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [notaToDelete, setNotaToDelete] = useState<Nota | null>(null)
-  const [newNote, setNewNote] = useState({ title: "", content: "", area: "" })
-  const [editNote, setEditNote] = useState({ title: "", content: "", area: "" })
+  const [newNote, setNewNote] = useState({ title: "", content: "", area: "", tipoActividad: "" })
+  const [editNote, setEditNote] = useState({ title: "", content: "", area: "", tipoActividad: "" })
   const [selectedMonth, setSelectedMonth] = useState<string>("all")
 
   const fixedNotas = useMemo(() => notas.map(nota => ({ ...nota, area: areas.find(a => a.id === nota.area.id) || nota.area })), [notas, areas])
@@ -81,18 +82,18 @@ export function Notes() {
     return colors[area as keyof typeof colors] || "bg-gray-100 text-gray-800 border-gray-200"
   }
 
-  const handleCreateNoteLocal = () => handleCreateNote(newNote, areas, setNewNote, setIsDialogOpen);
+  const handleCreateNoteLocal = () => handleCreateNote(newNote, areas, tipoActividades, setNewNote, setIsDialogOpen);
 
   const handleEditNoteLocal = () => {
     if (selectedNota) {
-      handleEditNote(selectedNota, editNote, areas, setEditNote, setIsEditDialogOpen);
+      handleEditNote(selectedNota, editNote, areas, tipoActividades, setEditNote, setIsEditDialogOpen);
     }
   };
 
   const openEditDialog = (note: Nota, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedNota(note);
-    setEditNote({ title: note.nombre, content: note.nota, area: note.area.name });
+    setEditNote({ title: note.nombre, content: note.nota, area: note.area.name, tipoActividad: (Array.isArray(note.tiposActividad) ? note.tiposActividad[0]?.nombre : "") || "" });
     setIsEditDialogOpen(true);
   };
 
@@ -147,6 +148,7 @@ export function Notes() {
               newNote={newNote}
               setNewNote={setNewNote}
               areas={areas}
+              tipoActividades={tipoActividades}
               handleCreateNoteLocal={handleCreateNoteLocal}
               isDialogOpen={isDialogOpen}
               setIsDialogOpen={setIsDialogOpen}
@@ -220,6 +222,7 @@ export function Notes() {
             newNote={editNote}
             setNewNote={setEditNote}
             areas={areas}
+            tipoActividades={tipoActividades}
             handleEditNoteLocal={handleEditNoteLocal}
             isEditDialogOpen={isEditDialogOpen}
             setIsEditDialogOpen={setIsEditDialogOpen}
