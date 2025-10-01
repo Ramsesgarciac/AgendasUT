@@ -31,6 +31,7 @@ import { CalendarComponent } from "@/app/calendar/page"
 import { Area, Activity } from '@/types/area';
 import { useAreas } from '@/hooks/useAreas';
 import { useActividades } from '@/hooks/useActividades';
+import { useTipoActividades } from '@/hooks/useTipoActividades';
 
 const getColorClasses = (color: Area["color"]) => {
   const colorMap = {
@@ -45,7 +46,8 @@ const getColorClasses = (color: Area["color"]) => {
 
 export default function ActivityDashboard() {
   const { areas, loading: areasLoading, error: areasError } = useAreas();
-  const { actividades, tipoActividades, loading: actividadesLoading, error: actividadesError, createActividad } = useActividades();
+  const { actividades, loading: actividadesLoading, error: actividadesError, createActividad } = useActividades();
+  const { tipoActividades } = useTipoActividades();
 
   const loading = areasLoading || actividadesLoading;
   const error = areasError || actividadesError;

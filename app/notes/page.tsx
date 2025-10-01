@@ -19,12 +19,12 @@ import { NoteEdit } from '@/components/cards/noteEdit';
 import { NoteDelete } from '@/components/cards/noteDelete';
 import { Nota } from '@/types/nota';
 import { useAreas } from '@/hooks/useAreas';
-import { useActividades } from '@/hooks/useActividades';
+import { useTipoActividades } from '@/hooks/useTipoActividades';
 
 export function Notes() {
   const { notas, handleCreateNote, handleEditNote, deleteNotaState } = useNotas();
   const { areas } = useAreas();
-  const { tipoActividades } = useActividades();
+  const { tipoActividades } = useTipoActividades();
   const [notes, setNotes] = useState<Nota[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedNote, setSelectedNote] = useState<Nota | null>(null)

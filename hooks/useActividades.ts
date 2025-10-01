@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { getActividades, createActividad } from '../lib/services/actividadService';
-import { getTipoActividades } from '../lib/services/tipoActividadService';
-import { TipoActividad } from '../types/tipoActividad';
 import { Actividad } from '../types/actividad';
 
 interface CreateActividadData {
@@ -18,30 +16,21 @@ interface CreateActividadData {
 
 export const useActividades = () => {
   const [actividades, setActividades] = useState<Actividad[]>([]);
-  const [tipoActividades, setTipoActividades] = useState<TipoActividad[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchActividades = async () => {
       try {
-        setLoading(true);
-        const [actividadesData, tipoActividadesData] = await Promise.all([
-          getActividades(),
-          getTipoActividades()
-        ]);
-
-        setActividades(actividadesData);
-        setTipoActividades(tipoActividadesData);
+        const data = await getActividades();
+        setActividades(data);
       } catch (err) {
-        console.error('Error fetching data:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchData();
+    fetchActividades();
   }, []);
 
   const createActividadHandler = async (data: CreateActividadData): Promise<Actividad> => {
@@ -58,7 +47,6 @@ export const useActividades = () => {
 
   return {
     actividades,
-    tipoActividades,
     loading,
     error,
     createActividad: createActividadHandler
