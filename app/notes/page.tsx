@@ -243,9 +243,16 @@ export function Notes() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg line-clamp-2 mb-3">{note.nombre}</CardTitle>
                 <div className="flex justify-between items-center mb-3">
-                  <Badge variant="outline" className={getAreaColor(note.area.name)}>
-                    {note.area.name}
-                  </Badge>
+                  <div className="flex gap-2">
+                    <Badge variant="outline" className={getAreaColor(note.area.name)}>
+                      {note.area.name}
+                    </Badge>
+                    {Array.isArray(note.tiposActividad) && note.tiposActividad.length > 0 && (
+                      <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                        {note.tiposActividad[0].nombre}
+                      </Badge>
+                    )}
+                  </div>
                   <span className="text-xs text-muted-foreground">{formatDate(note.fechaCreacion)}</span>
                 </div>
                 <div className="flex gap-2 pt-2">

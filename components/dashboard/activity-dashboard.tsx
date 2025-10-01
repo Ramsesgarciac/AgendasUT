@@ -31,6 +31,7 @@ import { CalendarComponent } from "@/app/calendar/page"
 import { Area, Activity } from '@/types/area';
 import { useAreas } from '@/hooks/useAreas';
 import { useActividades } from '@/hooks/useActividades';
+import { useTipoActividad } from '@/hooks/useTipoActividad';
 
 const getColorClasses = (color: Area["color"]) => {
   const colorMap = {
@@ -46,6 +47,7 @@ const getColorClasses = (color: Area["color"]) => {
 export default function ActivityDashboard() {
   const { areas, loading, error } = useAreas();
   const { actividades } = useActividades();
+  const { tipoActividades, createActividad } = useTipoActividad();
   const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -54,7 +56,8 @@ export default function ActivityDashboard() {
   const [formData, setFormData] = useState({
     subject: "",
     area: "",
-    instance: "",
+    instanciaEmisora: "",
+    instanciaReceptora: "",
     dueDate: "",
     activityType: "",
     note: "",
@@ -122,18 +125,36 @@ export default function ActivityDashboard() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Nueva actividad:", formData)
-    setIsModalOpen(false)
-    setFormData({
-      subject: "",
-      area: "",
-      instance: "",
-      dueDate: "",
-      activityType: "",
-      note: "",
-    })
+    try {
+      const payload = {
+        asunto: formData.subject,
+        instanciaReceptora: formData.instanciaReceptora,
+        instanciaEmisora: formData.instanciaEmisora,
+        tipoActividad: formData.activityType,
+        fechaLimite: formData.dueDate + "T23:59:59.000Z",
+        idArea: parseInt(formData.area),
+        idUserCreate: 1, // Assuming user ID 2
+        statusId: 1,
+        crearColeccionComentarios: true,
+      };
+      await createActividad(payload);
+      console.log("Actividad creada exitosamente");
+      setIsModalOpen(false)
+      setFormData({
+        subject: "",
+        area: "",
+        instanciaEmisora: "",
+        instanciaReceptora: "",
+        dueDate: "",
+        activityType: "",
+        note: "",
+      })
+    } catch (error) {
+      console.error("Error creando actividad:", error);
+      // TODO: Show error message to user
+    }
   }
 
   const renderDashboardContent = () => {
@@ -471,22 +492,36 @@ export default function ActivityDashboard() {
 
                           {/* Instancia + Fecha Límite en la misma fila */}
                           <div className="flex flex-col sm:flex-row gap-4">
-                            {/* Instancia */}
+                            {/* Instancia Emisora */}
                             <div className="flex-1 space-y-2">
-                              <Label htmlFor="instance" className="text-sm font-medium">
-                                Instancia
+                              <Label htmlFor="instanciaEmisora" className="text-sm font-medium">
+                                Instancia Emisora
                               </Label>
                               <Input
-                                id="instance"
-                                placeholder="Ingresa la instancia"
-                                value={formData.instance}
-                                onChange={(e) => handleInputChange("instance", e.target.value)}
+                                id="instanciaEmisora"
+                                placeholder="Ingresa la instancia emisora"
+                                value={formData.instanciaEmisora}
+                                onChange={(e) => handleInputChange("instanciaEmisora", e.target.value)}
                                 className="w-full"
                               />
                             </div>
 
-                            {/* Fecha Límite */}
                             <div className="flex-1 space-y-2">
+                              <Label htmlFor="instanciaReceptora" className="text-sm font-medium">
+                                Instancia Receptora
+                              </Label>
+                              <Input
+                                id="instanciaReceptora"
+                                placeholder="Ingresa la instancia receptora"
+                                value={formData.instanciaReceptora}
+                                onChange={(e) => handleInputChange("instanciaReceptora", e.target.value)}
+                                className="w-full"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Fecha Límite */}
+                          <div className="space-y-2">
                               <Label htmlFor="dueDate" className="text-sm font-medium">
                                 Fecha Límite *
                               </Label>
@@ -498,7 +533,6 @@ export default function ActivityDashboard() {
                                 required
                                 className="w-full"
                               />
-                            </div>
                           </div>
                           {/* Tipo de Actividad */}
                           <div className="space-y-2">
@@ -507,14 +541,14 @@ export default function ActivityDashboard() {
                             </Label>
                             <Input
                               id="activityType"
-                              placeholder="Ingresa la actividad"
+                              placeholder="Ingresa el tipo de actividad"
                               value={formData.activityType}
                               onChange={(e) => handleInputChange("activityType", e.target.value)}
                               className="w-full"
                             />
                           </div>
 
-                          {/* Nota */}
+                          {/* Nota
                           <div className="space-y-2">
                             <Label htmlFor="note" className="text-sm font-medium">
                               Agregar Nota
@@ -526,7 +560,7 @@ export default function ActivityDashboard() {
                               onChange={(e) => handleInputChange("note", e.target.value)}
                               className="w-full min-h-[100px] resize-none"
                             />
-                          </div>
+                          </div> */}
 
                           {/* Botones */}
                           <div className="flex justify-end gap-3 pt-4">

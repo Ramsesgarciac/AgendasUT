@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getTipoActividades } from '../lib/services/tipoActividadService';
+import { createActividad } from '../lib/services/actividadService';
 import { TipoActividad } from '../types/tipoActividad';
+import { Actividad } from '../types/actividad';
 
 export const useTipoActividad = () => {
   const [tipoActividades, setTipoActividades] = useState<TipoActividad[]>([]);
@@ -24,5 +26,19 @@ export const useTipoActividad = () => {
     fetchData();
   }, []);
 
-  return { tipoActividades, loading, error };
+  const createActividadHandler = async (data: {
+    asunto: string;
+    instanciaReceptora: string;
+    instanciaEmisora: string;
+    tipoActividad: string;
+    fechaLimite: string;
+    idArea: number;
+    idUserCreate: number;
+    statusId: number;
+    crearColeccionComentarios: boolean;
+  }): Promise<Actividad> => {
+    return await createActividad(data);
+  };
+
+  return { tipoActividades, loading, error, createActividad: createActividadHandler };
 };
