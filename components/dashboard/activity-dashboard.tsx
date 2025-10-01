@@ -304,11 +304,11 @@ export default function ActivityDashboard() {
       {/* Sidebar */}
       <div
         className={`
-        fixed lg:relative inset-y-0 left-0 z-50 w-64 bg-[#1F355E] text-white transform transition-all duration-300 ease-in-out
-        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        ${isSidebarCollapsed ? "lg:w-20" : "lg:w-64"}
-        h-full
-      `}
+          fixed lg:relative inset-y-0 left-0 z-50 w-64 bg-[#1F355E] text-white transform transition-all duration-300 ease-in-out
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+          ${isSidebarCollapsed ? "lg:w-20" : "lg:w-64"}
+          h-full
+        `}
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
@@ -343,7 +343,7 @@ export default function ActivityDashboard() {
                   currentView === "dashboard"
                     ? "bg-blue-800 text-white"
                     : "text-blue-100 hover:bg-blue-800 hover:text-white"
-                }`}
+                } ${isSidebarCollapsed ? "justify-center" : ""}`}
                 onClick={() => setCurrentView("dashboard")}
               >
                 <Home className="w-5 h-5 flex-shrink-0" />
@@ -356,7 +356,7 @@ export default function ActivityDashboard() {
                   currentView === "notes"
                     ? "bg-blue-800 text-white"
                     : "text-blue-100 hover:bg-blue-800 hover:text-white"
-                }`}
+                } ${isSidebarCollapsed ? "justify-center" : ""}`}
                 onClick={() => setCurrentView("notes")}
               >
                 <StickyNote className="w-5 h-5 flex-shrink-0" />
@@ -369,7 +369,7 @@ export default function ActivityDashboard() {
                   currentView === "calendar"
                     ? "bg-blue-800 text-white"
                     : "text-blue-100 hover:bg-blue-800 hover:text-white"
-                }`}
+                } ${isSidebarCollapsed ? "justify-center" : ""}`}
                 onClick={() => setCurrentView("calendar")}
               >
                 <CalendarDays className="w-5 h-5 flex-shrink-0" />
@@ -381,10 +381,8 @@ export default function ActivityDashboard() {
       </div>
 
       {/* Main Content */}
-      <div
-        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${isSidebarCollapsed ? "lg:ml-20" : "lg:ml-64"} overflow-hidden`}
-      >
-        <div className="p-4 md:p-6 lg:p-8 border-b border-border">
+      <div className="flex-1 flex flex-col min-w-0 pl-2 overflow-hidden">
+        <div className="pl-0 pr-2 pt-2 pb-2 md:pl-1 md:pr-4 md:pt-4 md:pb-4 lg:pl-2 lg:pr-6 lg:pt-6 lg:pb-6 border-b border-border">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-4">
               {/* Mobile Menu Button */}
@@ -584,7 +582,7 @@ export default function ActivityDashboard() {
           </div>
         </div>
 
-        <div className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">{renderDashboardContent()}</div>
+        <div className="flex-1 pl-0 pr-2 pt-2 pb-2 md:pl-1 md:pr-4 md:pt-4 md:pb-4 lg:pl-2 lg:pr-6 lg:pt-6 lg:pb-6 overflow-auto">{renderDashboardContent()}</div>
       </div>
     </div>
   )
