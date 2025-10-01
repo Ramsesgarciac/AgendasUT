@@ -31,7 +31,6 @@ import { CalendarComponent } from "@/app/calendar/page"
 import { Area, Activity } from '@/types/area';
 import { useAreas } from '@/hooks/useAreas';
 import { useActividades } from '@/hooks/useActividades';
-import { useTipoActividad } from '@/hooks/useTipoActividad';
 
 const getColorClasses = (color: Area["color"]) => {
   const colorMap = {
@@ -45,9 +44,11 @@ const getColorClasses = (color: Area["color"]) => {
 }
 
 export default function ActivityDashboard() {
-  const { areas, loading, error } = useAreas();
-  const { actividades } = useActividades();
-  const { tipoActividades, createActividad } = useTipoActividad();
+  const { areas, loading: areasLoading, error: areasError } = useAreas();
+  const { actividades, tipoActividades, loading: actividadesLoading, error: actividadesError, createActividad } = useActividades();
+
+  const loading = areasLoading || actividadesLoading;
+  const error = areasError || actividadesError;
   const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
