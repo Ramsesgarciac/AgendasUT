@@ -7,31 +7,16 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent } from "@/components/ui/card"
-import {
-  Plus,
-  Calendar,
-  FileText,
-  ChevronDown,
-  Home,
-  StickyNote,
-  CalendarDays,
-  Menu,
-  X,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react"
+import { Dialog, DialogTrigger } from "@/components/ui/dialog"
+import {Plus,Calendar,FileText,ChevronDown,Menu,} from "lucide-react"
 import { Notes } from "@/app/notes/page"
 import { CalendarComponent } from "@/app/calendar/page"
-import { Area, Activity } from '@/types/area';
+import { Area } from '@/types/area';
 import { useAreas } from '@/hooks/useAreas';
 import { useActividades } from '@/hooks/useActividades';
 import { useTipoActividades } from '@/hooks/useTipoActividades';
+import { ActivityCreate } from '@/components/cards/activityCreate';
+import { SidebarHeader, SidebarNav } from '@/components/nav/sidebar';
 
 const getColorClasses = (color: Area["color"]) => {
   const colorMap = {
@@ -89,7 +74,7 @@ export default function ActivityDashboard() {
     }
   }, [areas]);
 
-  const areasWithActivities = useMemo(() => areas.map(area => ({ ...area, activities: actividades.filter(act => act.area.id === area.id).map(act => ({ id: act.id.toString(), subject: act.asunto, date: new Date(act.fechaLimite).toISOString().split('T')[0] })) })), [areas, actividades]);
+  const areasWithActivities = useMemo(() => areas.map(area => ({ ...area, activities: actividades.filter(act => act.area.id === area.id).map(act => ({ ...act, id: act.id.toString(), subject: act.asunto })) })), [areas, actividades]);
 
   const filteredAreas = selectedAreaIds.length === 0 ? [] : areasWithActivities.filter((area) => selectedAreaIds.includes(area.id))
 
@@ -233,7 +218,7 @@ export default function ActivityDashboard() {
                                   </h4>
                                   <div className="flex items-center justify-center text-xs text-muted-foreground">
                                     <Calendar className="w-3 h-3 mr-1" />
-                                    {formatDate(activity.date)}
+                                    Fecha Límite: {formatDate(activity.fechaLimite as unknown as string)}
                                   </div>
                                 </div>
                               ))
@@ -277,7 +262,7 @@ export default function ActivityDashboard() {
                               </h4>
                               <div className="flex items-center text-xs text-muted-foreground">
                                 <Calendar className="w-3 h-3 mr-1" />
-                                {formatDate(activity.date)}
+                                Fecha Límite: {formatDate(activity.fechaLimite as unknown as string)}
                               </div>
                             </div>
                           ))}
@@ -312,71 +297,17 @@ export default function ActivityDashboard() {
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
-          <div className="p-4 border-b border-blue-800 flex items-center justify-between">
-            {!isSidebarCollapsed && <h2 className="text-lg font-semibold">UTVCO</h2>}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="hidden lg:flex text-white hover:bg-blue-800 p-1 h-8 w-8"
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              >
-                {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="lg:hidden text-white hover:bg-blue-800 p-1 h-8 w-8"
-                onClick={() => setIsSidebarOpen(false)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+          <SidebarHeader
+            isSidebarCollapsed={isSidebarCollapsed}
+            setIsSidebarCollapsed={setIsSidebarCollapsed}
+            setIsSidebarOpen={setIsSidebarOpen}
+          />
 
-          {/* Navigation Items */}
-          <nav className="flex-1 p-4">
-            <div className="space-y-2">
-              {/* Home/Tablero */}
-              <button
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                  currentView === "dashboard"
-                    ? "bg-blue-800 text-white"
-                    : "text-blue-100 hover:bg-blue-800 hover:text-white"
-                } ${isSidebarCollapsed ? "justify-center" : ""}`}
-                onClick={() => setCurrentView("dashboard")}
-              >
-                <Home className="w-5 h-5 flex-shrink-0" />
-                {!isSidebarCollapsed && <span className="font-medium">Tablero</span>}
-              </button>
-
-              {/* Notas */}
-              <button
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                  currentView === "notes"
-                    ? "bg-blue-800 text-white"
-                    : "text-blue-100 hover:bg-blue-800 hover:text-white"
-                } ${isSidebarCollapsed ? "justify-center" : ""}`}
-                onClick={() => setCurrentView("notes")}
-              >
-                <StickyNote className="w-5 h-5 flex-shrink-0" />
-                {!isSidebarCollapsed && <span className="font-medium">Notas</span>}
-              </button>
-
-              {/* Calendario */}
-              <button
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                  currentView === "calendar"
-                    ? "bg-blue-800 text-white"
-                    : "text-blue-100 hover:bg-blue-800 hover:text-white"
-                } ${isSidebarCollapsed ? "justify-center" : ""}`}
-                onClick={() => setCurrentView("calendar")}
-              >
-                <CalendarDays className="w-5 h-5 flex-shrink-0" />
-                {!isSidebarCollapsed && <span className="font-medium">Calendario</span>}
-              </button>
-            </div>
-          </nav>
+          <SidebarNav
+            currentView={currentView}
+            setCurrentView={setCurrentView}
+            isSidebarCollapsed={isSidebarCollapsed}
+          />
         </div>
       </div>
 
@@ -449,133 +380,13 @@ export default function ActivityDashboard() {
                       Crear
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-semibold">Crear Nueva Actividad</DialogTitle>
-                    </DialogHeader>
-
-                    <Card className="border-0 shadow-none">
-                      <CardContent className="p-0">
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                          {/* Asunto */}
-                          <div className="space-y-2">
-                            <Label htmlFor="subject" className="text-sm font-medium">
-                              Asunto
-                            </Label>
-                            <Input
-                              id="subject"
-                              placeholder="Ingresa el asunto de la actividad"
-                              value={formData.subject}
-                              onChange={(e) => handleInputChange("subject", e.target.value)}
-                              required
-                              className="w-full"
-                            />
-                          </div>
-
-                          {/* Área */}
-                          <div className="space-y-2">
-                            <Label htmlFor="area" className="text-sm font-medium">
-                              Área
-                            </Label>
-                            <Select value={formData.area} onValueChange={(value) => handleInputChange("area", value)}>
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Selecciona un área" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {areasWithActivities.map((area) => (
-                                  <SelectItem key={area.id} value={area.id.toString()}>
-                                    {area.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          {/* Instancia + Fecha Límite en la misma fila */}
-                          <div className="flex flex-col sm:flex-row gap-4">
-                            {/* Instancia Emisora */}
-                            <div className="flex-1 space-y-2">
-                              <Label htmlFor="instanciaEmisora" className="text-sm font-medium">
-                                Instancia Emisora
-                              </Label>
-                              <Input
-                                id="instanciaEmisora"
-                                placeholder="Ingresa la instancia emisora"
-                                value={formData.instanciaEmisora}
-                                onChange={(e) => handleInputChange("instanciaEmisora", e.target.value)}
-                                className="w-full"
-                              />
-                            </div>
-
-                            <div className="flex-1 space-y-2">
-                              <Label htmlFor="instanciaReceptora" className="text-sm font-medium">
-                                Instancia Receptora
-                              </Label>
-                              <Input
-                                id="instanciaReceptora"
-                                placeholder="Ingresa la instancia receptora"
-                                value={formData.instanciaReceptora}
-                                onChange={(e) => handleInputChange("instanciaReceptora", e.target.value)}
-                                className="w-full"
-                              />
-                            </div>
-                          </div>
-
-                          {/* Fecha Límite */}
-                          <div className="space-y-2">
-                              <Label htmlFor="dueDate" className="text-sm font-medium">
-                                Fecha Límite *
-                              </Label>
-                              <Input
-                                id="dueDate"
-                                type="date"
-                                value={formData.dueDate}
-                                onChange={(e) => handleInputChange("dueDate", e.target.value)}
-                                required
-                                className="w-full"
-                              />
-                          </div>
-                          {/* Tipo de Actividad */}
-                          <div className="space-y-2">
-                            <Label htmlFor="activityType" className="text-sm font-medium">
-                              Tipo de Actividad
-                            </Label>
-                            <Input
-                              id="activityType"
-                              placeholder="Ingresa el tipo de actividad"
-                              value={formData.activityType}
-                              onChange={(e) => handleInputChange("activityType", e.target.value)}
-                              className="w-full"
-                            />
-                          </div>
-
-                          {/* Nota
-                          <div className="space-y-2">
-                            <Label htmlFor="note" className="text-sm font-medium">
-                              Agregar Nota
-                            </Label>
-                            <Textarea
-                              id="note"
-                              placeholder="Agrega una nota o descripción adicional..."
-                              value={formData.note}
-                              onChange={(e) => handleInputChange("note", e.target.value)}
-                              className="w-full min-h-[100px] resize-none"
-                            />
-                          </div> */}
-
-                          {/* Botones */}
-                          <div className="flex justify-end gap-3 pt-4">
-                            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-                              Cancelar
-                            </Button>
-                            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                              Crear Actividad
-                            </Button>
-                          </div>
-                        </form>
-                      </CardContent>
-                    </Card>
-                  </DialogContent>
+                  <ActivityCreate
+                    formData={formData}
+                    areasWithActivities={areasWithActivities}
+                    handleInputChange={handleInputChange}
+                    handleSubmit={handleSubmit}
+                    setIsModalOpen={setIsModalOpen}
+                  />
                 </Dialog>
               </div>
             )}
