@@ -1,5 +1,5 @@
     import { useState, useEffect } from 'react';
-    import { getComentarios, createComentario } from '../lib/services/comentarioService';
+    import { comentarioService } from '../lib/services/comentarioService';
     import { Comentario } from '../types/comentario';
 
     interface CreateComentarioData {
@@ -15,29 +15,29 @@
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchComentarios = async () => {
+      const fetchComentarios = async () => {
         try {
-            const data = await getComentarios();
-            setComentarios(data);
+          const data = await comentarioService.getComentarios();
+          setComentarios(data);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Unknown error');
+          setError(err instanceof Error ? err.message : 'Unknown error');
         } finally {
-            setLoading(false);
+          setLoading(false);
         }
-        };
-        fetchComentarios();
+      };
+      fetchComentarios();
     }, []);
-
+  
     const createComentarioHandler = async (data: CreateComentarioData): Promise<Comentario> => {
-        try {
-        const nuevoComentario = await createComentario(data);
+      try {
+        const nuevoComentario = await comentarioService.createComentario(data);
         // Opcional: Actualizar el estado local
         setComentarios(prev => [...prev, nuevoComentario]);
         return nuevoComentario;
-        } catch (error) {
+      } catch (error) {
         console.error('Error creating comentario:', error);
         throw error;
-        }
+      }
     };
 
     return {

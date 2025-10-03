@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getActividades, createActividad } from '../lib/services/actividadService';
+import { actividadService } from '../lib/services/actividadService';
+import { getTipoActividades } from '../lib/services/tipoActividadService';
+import { TipoActividad } from '../types/tipoActividad';
 import { Actividad } from '../types/actividad';
 
 interface CreateActividadData {
@@ -16,26 +18,35 @@ interface CreateActividadData {
 
 export const useActividades = () => {
   const [actividades, setActividades] = useState<Actividad[]>([]);
+  const [tipoActividades, setTipoActividades] = useState<TipoActividad[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchActividades = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getActividades();
-        setActividades(data);
+        setLoading(true);
+        const [actividadesData, tipoActividadesData] = await Promise.all([
+          actividadService.getActividades(),
+          getTipoActividades()
+        ]);
+
+        setActividades(actividadesData);
+        setTipoActividades(tipoActividadesData);
       } catch (err) {
+        console.error('Error fetching data:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);
       }
     };
-    fetchActividades();
+
+    fetchData();
   }, []);
 
   const createActividadHandler = async (data: CreateActividadData): Promise<Actividad> => {
     try {
-      const nuevaActividad = await createActividad(data);
+      const nuevaActividad = await actividadService.createActividad(data);
       // Opcional: Actualizar el estado local
       setActividades(prev => [...prev, nuevaActividad]);
       return nuevaActividad;
@@ -47,6 +58,7 @@ export const useActividades = () => {
 
   return {
     actividades,
+    tipoActividades,
     loading,
     error,
     createActividad: createActividadHandler

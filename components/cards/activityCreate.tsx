@@ -3,10 +3,12 @@
     import { Input } from "@/components/ui/input"
     import { Label } from "@/components/ui/label"
     import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+    import { Textarea } from "@/components/ui/textarea"
     import { Button } from "@/components/ui/button"
+    import { useComentarios } from "@/hooks/useComentarios"
 
     interface ActivityCreateProps {
-    formData: {
+      formData: {
         subject: string;
         area: string;
         instanciaEmisora: string;
@@ -14,19 +16,20 @@
         dueDate: string;
         activityType: string;
         note: string;
-    };
-    areasWithActivities: any[];
-    handleInputChange: (field: string, value: string) => void;
-    handleSubmit: (e: React.FormEvent) => void;
-    setIsModalOpen: (open: boolean) => void;
+        comment: string;
+      };
+      areasWithActivities: any[];
+      handleInputChange: (field: string, value: string) => void;
+      handleSubmit: (e: React.FormEvent) => Promise<void>;
+      setIsModalOpen: (open: boolean) => void;
     }
 
     export function ActivityCreate({
-    formData,
-    areasWithActivities,
-    handleInputChange,
-    handleSubmit,
-    setIsModalOpen
+      formData,
+      areasWithActivities,
+      handleInputChange,
+      handleSubmit,
+      setIsModalOpen
     }: ActivityCreateProps) {
     return (
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
@@ -117,31 +120,31 @@
                 </div>
                 {/* Tipo de Actividad */}
                 <div className="space-y-2">
-                <Label htmlFor="activityType" className="text-sm font-medium">
-                    Tipo de Actividad
-                </Label>
-                <Input
-                    id="activityType"
-                    placeholder="Ingresa el tipo de actividad"
-                    value={formData.activityType}
-                    onChange={(e) => handleInputChange("activityType", e.target.value)}
-                    className="w-full"
-                />
+                    <Label htmlFor="activityType" className="text-sm font-medium">
+                        Tipo de Actividad
+                    </Label>
+                    <Input
+                        id="activityType"
+                        placeholder="Ingresa el tipo de actividad"
+                        value={formData.activityType}
+                        onChange={(e) => handleInputChange("activityType", e.target.value)}
+                        className="w-full"
+                    />
                 </div>
-
-                {/* Nota
+    
+                {/* Comentario */}
                 <div className="space-y-2">
-                <Label htmlFor="note" className="text-sm font-medium">
-                    Agregar Nota
-                </Label>
-                <Textarea
-                    id="note"
-                    placeholder="Agrega una nota o descripción adicional..."
-                    value={formData.note}
-                    onChange={(e) => handleInputChange("note", e.target.value)}
-                    className="w-full min-h-[100px] resize-none"
-                />
-                </div> */}
+                    <Label htmlFor="comment" className="text-sm font-medium">
+                        Comentario
+                    </Label>
+                    <Textarea
+                        id="comment"
+                        placeholder="Agrega un comentario inicial..."
+                        value={formData.comment}
+                        onChange={(e) => handleInputChange("comment", e.target.value)}
+                        className="w-full min-h-[80px] resize-none"
+                    />
+                </div>
 
                 {/* Botones */}
                 <div className="flex justify-end gap-3 pt-4">

@@ -9,10 +9,10 @@ class ColeccionComentariosService extends BaseService {
     }
 
     async addComentariosToColeccion(id: number, comentarioIds: number[]): Promise<ColeccionComentarios> {
-        return this.fetchWithAuth(`${this.baseUrl}/${id}/comentarios`, {
+      return this.fetchWithAuth(`${this.baseUrl}/${id}/comentarios`, {
         method: 'PUT',
-        body: JSON.stringify({ comentarioIds }),
-        });
+        body: JSON.stringify(comentarioIds),
+      });
     }
 }
 

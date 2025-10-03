@@ -15,6 +15,9 @@ import { Area } from '@/types/area';
 import { useAreas } from '@/hooks/useAreas';
 import { useActividades } from '@/hooks/useActividades';
 import { useTipoActividades } from '@/hooks/useTipoActividades';
+import { useComentarios } from '@/hooks/useComentarios';
+import { useColeccionComentarios } from '@/hooks/useColeccionComentarios';
+import { coleccionComentariosService } from '@/lib/services/coleccionComentariosService';
 import { ActivityCreate } from '@/components/cards/activityCreate';
 import { SidebarHeader, SidebarNav } from '@/components/nav/sidebar';
 
@@ -33,6 +36,8 @@ export default function ActivityDashboard() {
   const { areas, loading: areasLoading, error: areasError } = useAreas();
   const { actividades, loading: actividadesLoading, error: actividadesError, createActividad } = useActividades();
   const { tipoActividades } = useTipoActividades();
+  const { createComentario } = useComentarios();
+  const { coleccionComentarios, refetch } = useColeccionComentarios();
 
   const loading = areasLoading || actividadesLoading;
   const error = areasError || actividadesError;
@@ -49,6 +54,7 @@ export default function ActivityDashboard() {
     dueDate: "",
     activityType: "",
     note: "",
+    comment: "",
   })
 
   // Cerrar sidebar en móvil al cambiar tamaño de pantalla
@@ -116,6 +122,24 @@ export default function ActivityDashboard() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      // Save activity data to localStorage as 'createAct'
+      const createActData = {
+        asunto: formData.subject,
+        area: formData.area,
+        instanciaReceptora: formData.instanciaReceptora,
+        instanciaEmisora: formData.instanciaEmisora,
+        fechaLimite: formData.dueDate,
+        tipoActividad: formData.activityType,
+      };
+      localStorage.setItem('createAct', JSON.stringify(createActData));
+
+      // Save comment data to localStorage as 'createCom'
+      const createComData = {
+        comment: formData.comment,
+      };
+      localStorage.setItem('createCom', JSON.stringify(createComData));
+
+      // Create the activity
       const payload = {
         asunto: formData.subject,
         instanciaReceptora: formData.instanciaReceptora,
@@ -123,12 +147,33 @@ export default function ActivityDashboard() {
         tipoActividad: formData.activityType,
         fechaLimite: formData.dueDate + "T23:59:59.000Z",
         idArea: parseInt(formData.area),
-        idUserCreate: 1, // Assuming user ID 2
+        idUserCreate: 1, // Assuming user ID 1
         statusId: 1,
         crearColeccionComentarios: true,
       };
-      await createActividad(payload);
-      console.log("Actividad creada exitosamente");
+      const nuevaActividad = await createActividad(payload);
+      console.log("Actividad creada exitosamente", nuevaActividad);
+
+      // If comment is provided, create it and add to the collection
+      if (formData.comment.trim()) {
+        const nuevoComentario = await createComentario({
+          contenido: formData.comment,
+          idActividad: nuevaActividad.id,
+          idUsuario: 1, // Assuming user ID 1
+        });
+        console.log("Comentario creado exitosamente", nuevoComentario);
+
+        // Fetch collections to get the newly created one
+        const updatedColecciones = await coleccionComentariosService.getColeccionComentarios();
+
+        // Find the collection for this activity
+        const coleccion = updatedColecciones.find(col => col.actividad.id === nuevaActividad.id);
+        if (coleccion && nuevoComentario.id) {
+          // TODO: Add comment to collection via PUT
+          console.log("Comentario creado, pero no agregado a colección (endpoint no disponible)");
+        }
+      }
+
       setIsModalOpen(false)
       setFormData({
         subject: "",
@@ -138,9 +183,10 @@ export default function ActivityDashboard() {
         dueDate: "",
         activityType: "",
         note: "",
+        comment: "",
       })
     } catch (error) {
-      console.error("Error creando actividad:", error);
+      console.error("Error creando actividad o comentario:", error);
       // TODO: Show error message to user
     }
   }
