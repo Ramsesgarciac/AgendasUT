@@ -6,6 +6,7 @@ import { Actividad } from '../types/actividad';
 
 interface CreateActividadData {
   asunto: string;
+  descripcion?: string;
   instanciaReceptora: string;
   instanciaEmisora: string;
   tipoActividad: string;
@@ -14,6 +15,17 @@ interface CreateActividadData {
   idUserCreate: number;
   statusId: number;
   crearColeccionComentarios: boolean;
+}
+
+interface UpdateActividadData {
+  asunto: string;
+  descripcion: string;
+  instanciaReceptora: string;
+  instanciaEmisora: string;
+  tipoActividad: string;
+  fechaLimite: string;
+  idArea: number;
+  statusId: number;
 }
 
 export const useActividades = () => {
@@ -56,11 +68,24 @@ export const useActividades = () => {
     }
   };
 
+  const updateActividadHandler = async (id: number, data: UpdateActividadData): Promise<Actividad> => {
+    try {
+      const actividadActualizada = await actividadService.updateActividad(id, data);
+      // Opcional: Actualizar el estado local
+      setActividades(prev => prev.map(act => act.id === id ? actividadActualizada : act));
+      return actividadActualizada;
+    } catch (error) {
+      console.error('Error updating actividad:', error);
+      throw error;
+    }
+  };
+
   return {
     actividades,
     tipoActividades,
     loading,
     error,
-    createActividad: createActividadHandler
+    createActividad: createActividadHandler,
+    updateActividad: updateActividadHandler
   };
 };

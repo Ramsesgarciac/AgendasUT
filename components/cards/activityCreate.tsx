@@ -10,12 +10,12 @@
     interface ActivityCreateProps {
       formData: {
         subject: string;
+        descripcion: string;
         area: string;
         instanciaEmisora: string;
         instanciaReceptora: string;
         dueDate: string;
         activityType: string;
-        note: string;
         comment: string;
       };
       areasWithActivities: any[];
@@ -52,6 +52,20 @@
                     onChange={(e) => handleInputChange("subject", e.target.value)}
                     required
                     className="w-full"
+                />
+                </div>
+
+                {/* Descripción */}
+                <div className="space-y-2">
+                <Label htmlFor="descripcion" className="text-sm font-medium">
+                    Descripción
+                </Label>
+                <Textarea
+                    id="descripcion"
+                    placeholder="Ingresa la descripción de la actividad"
+                    value={formData.descripcion}
+                    onChange={(e) => handleInputChange("descripcion", e.target.value)}
+                    className="w-full min-h-[80px] resize-none"
                 />
                 </div>
 

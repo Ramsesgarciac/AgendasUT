@@ -28,6 +28,7 @@ export interface ColeccionComentarios {
 export interface Actividad {
   id: number;
   asunto: string;
+  descripcion: string;
   instanciaReceptora: string;
   instanciaEmisora: string;
   tipoActividad: string;

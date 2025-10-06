@@ -48,12 +48,12 @@ export default function ActivityDashboard() {
   const [currentView, setCurrentView] = useState<"dashboard" | "notes" | "calendar">("dashboard")
   const [formData, setFormData] = useState({
     subject: "",
+    descripcion: "",
     area: "",
     instanciaEmisora: "",
     instanciaReceptora: "",
     dueDate: "",
     activityType: "",
-    note: "",
     comment: "",
   })
 
@@ -140,7 +140,7 @@ export default function ActivityDashboard() {
       localStorage.setItem('createCom', JSON.stringify(createComData));
 
       // Create the activity
-      const payload = {
+      const payload: any = {
         asunto: formData.subject,
         instanciaReceptora: formData.instanciaReceptora,
         instanciaEmisora: formData.instanciaEmisora,
@@ -151,6 +151,9 @@ export default function ActivityDashboard() {
         statusId: 1,
         crearColeccionComentarios: true,
       };
+      if (formData.descripcion.trim()) {
+        payload.descripcion = formData.descripcion;
+      }
       const nuevaActividad = await createActividad(payload);
       console.log("Actividad creada exitosamente", nuevaActividad);
 
@@ -177,12 +180,12 @@ export default function ActivityDashboard() {
       setIsModalOpen(false)
       setFormData({
         subject: "",
+        descripcion: "",
         area: "",
         instanciaEmisora: "",
         instanciaReceptora: "",
         dueDate: "",
         activityType: "",
-        note: "",
         comment: "",
       })
     } catch (error) {
