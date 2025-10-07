@@ -19,6 +19,7 @@ import { useComentarios } from '@/hooks/useComentarios';
 import { useColeccionComentarios } from '@/hooks/useColeccionComentarios';
 import { coleccionComentariosService } from '@/lib/services/coleccionComentariosService';
 import { ActivityCreate } from '@/components/cards/activityCreate';
+import { DocumentCreate } from '@/components/cards/documentCreate';
 import { SidebarHeader, SidebarNav } from '@/components/nav/sidebar';
 
 const getColorClasses = (color: Area["color"]) => {
@@ -43,6 +44,8 @@ export default function ActivityDashboard() {
   const error = areasError || actividadesError;
   const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [showDocumentDialog, setShowDocumentDialog] = useState(false)
+  const [createdActivityId, setCreatedActivityId] = useState<number | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [currentView, setCurrentView] = useState<"dashboard" | "notes" | "calendar">("dashboard")
@@ -146,7 +149,7 @@ export default function ActivityDashboard() {
         instanciaReceptora: formData.instanciaReceptora,
         instanciaEmisora: formData.instanciaEmisora,
         tipoActividad: formData.activityType,
-        fechaLimite: formData.dueDate + "T23:59:59.000Z",
+        fechaLimite: formData.dueDate,
         idArea: parseInt(formData.area),
         idUserCreate: 1, // Assuming user ID 1
         statusId: 1,
@@ -174,6 +177,10 @@ export default function ActivityDashboard() {
           console.log("Comentario agregado a la colección exitosamente");
         }
       }
+
+      // Open document upload dialog
+      setCreatedActivityId(nuevaActividad.id);
+      setShowDocumentDialog(true);
 
       setIsModalOpen(false)
       setFormData({
@@ -442,6 +449,14 @@ export default function ActivityDashboard() {
 
         <div className="flex-1 pl-0 pr-2 pt-2 pb-2 md:pl-1 md:pr-4 md:pt-4 md:pb-4 lg:pl-2 lg:pr-6 lg:pt-6 lg:pb-6 overflow-auto">{renderDashboardContent()}</div>
       </div>
+
+      {createdActivityId && (
+        <DocumentCreate
+          activityId={createdActivityId}
+          isOpen={showDocumentDialog}
+          onClose={() => setShowDocumentDialog(false)}
+        />
+      )}
     </div>
   )
 }

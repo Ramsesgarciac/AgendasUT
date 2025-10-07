@@ -8,12 +8,19 @@ class BaseService {
   }
 
   protected async fetchWithAuth(url: string, options: RequestInit = {}) {
+    const baseHeaders = this.getAuthHeaders();
+    const headers: Record<string, string> = {
+      ...(baseHeaders as Record<string, string>),
+      ...(options.headers as Record<string, string>),
+    };
+
+    if (options.body instanceof FormData) {
+      delete headers['Content-Type'];
+    }
+
     const response = await fetch(url, {
       ...options,
-      headers: {
-        ...this.getAuthHeaders(),
-        ...options.headers,
-      },
+      headers,
     });
 
     if (!response.ok) {

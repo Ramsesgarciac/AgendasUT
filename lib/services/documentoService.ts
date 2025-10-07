@@ -1,33 +1,26 @@
 import { Documento } from '../../types/documento';
+import BaseService from './baseService';
 
-class DocumentoService {
-  private getAuthHeaders(): HeadersInit {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    return {
-      'Authorization': token ? `Bearer ${token}` : '',
-    };
-  }
-
-  uploadMultiple = async (files: File[], documentos: { nombre: string; tipoDoc: string; idActividades: number }[]): Promise<Documento[]> => {
+class DocumentoService extends BaseService {
+  uploadMultiple = async (
+    files: File[], 
+    documentos: { nombre: string; tipoDoc: string; idActividades: number }[]
+  ): Promise<Documento[]> => {
     const formData = new FormData();
-
+    
+    // Agregar cada archivo al FormData
     files.forEach(file => {
       formData.append('archivos', file);
     });
-
+    
+    // Agregar los datos de los documentos como JSON string
     formData.append('documentos', JSON.stringify(documentos));
-
-    const response = await fetch('http://localhost:3000/documentos/multiple', {
+    
+    // Usar ruta relativa en lugar de URL completa
+    return this.fetchWithAuth('/api/documentos/multiple', {
       method: 'POST',
-      headers: this.getAuthHeaders(),
       body: formData,
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
   };
 }
 
