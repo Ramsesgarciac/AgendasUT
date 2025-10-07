@@ -37,7 +37,7 @@ export default function ActivityDashboard() {
   const { actividades, loading: actividadesLoading, error: actividadesError, createActividad } = useActividades();
   const { tipoActividades } = useTipoActividades();
   const { createComentario } = useComentarios();
-  const { coleccionComentarios, refetch } = useColeccionComentarios();
+  const { coleccionComentarios, refetch, addComentariosToColeccion } = useColeccionComentarios();
 
   const loading = areasLoading || actividadesLoading;
   const error = areasError || actividadesError;
@@ -142,6 +142,7 @@ export default function ActivityDashboard() {
       // Create the activity
       const payload: any = {
         asunto: formData.subject,
+        descripcion: formData.descripcion,
         instanciaReceptora: formData.instanciaReceptora,
         instanciaEmisora: formData.instanciaEmisora,
         tipoActividad: formData.activityType,
@@ -151,9 +152,6 @@ export default function ActivityDashboard() {
         statusId: 1,
         crearColeccionComentarios: true,
       };
-      if (formData.descripcion.trim()) {
-        payload.descripcion = formData.descripcion;
-      }
       const nuevaActividad = await createActividad(payload);
       console.log("Actividad creada exitosamente", nuevaActividad);
 
@@ -172,8 +170,8 @@ export default function ActivityDashboard() {
         // Find the collection for this activity
         const coleccion = updatedColecciones.find(col => col.actividad.id === nuevaActividad.id);
         if (coleccion && nuevoComentario.id) {
-          // TODO: Add comment to collection via PUT
-          console.log("Comentario creado, pero no agregado a colección (endpoint no disponible)");
+          await addComentariosToColeccion(coleccion.id, [nuevoComentario.id]);
+          console.log("Comentario agregado a la colección exitosamente");
         }
       }
 

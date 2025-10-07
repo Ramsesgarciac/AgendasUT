@@ -74,7 +74,7 @@
                 <Label htmlFor="area" className="text-sm font-medium">
                     Área
                 </Label>
-                <Select value={formData.area} onValueChange={(value) => handleInputChange("area", value)}>
+                <Select value={formData.area} onValueChange={(value) => handleInputChange("area", value)} required>
                     <SelectTrigger className="w-full">
                     <SelectValue placeholder="Selecciona un área" />
                     </SelectTrigger>
