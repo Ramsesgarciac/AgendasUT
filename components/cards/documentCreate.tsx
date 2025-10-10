@@ -6,18 +6,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useDocumentos } from "@/hooks/useDocumentos"
+import { DocumentForm } from "@/types/documento"
 import { Plus, Trash2 } from "lucide-react"
 
 interface DocumentCreateProps {
   activityId: number
   isOpen: boolean
   onClose: () => void
-}
-
-interface DocumentForm {
-  nombre: string
-  tipoDoc: string
-  file: File | null
 }
 
 export function DocumentCreate({ activityId, isOpen, onClose }: DocumentCreateProps) {

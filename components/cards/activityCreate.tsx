@@ -8,28 +8,28 @@
     import { useComentarios } from "@/hooks/useComentarios"
 
     interface ActivityCreateProps {
-      formData: {
-        subject: string;
-        descripcion: string;
-        area: string;
-        instanciaEmisora: string;
-        instanciaReceptora: string;
-        dueDate: string;
-        activityType: string;
-        comment: string;
-      };
-      areasWithActivities: any[];
-      handleInputChange: (field: string, value: string) => void;
-      handleSubmit: (e: React.FormEvent) => Promise<void>;
-      setIsModalOpen: (open: boolean) => void;
+        formData: {
+            subject: string;
+            descripcion: string;
+            area: string;
+            instanciaEmisora: string;
+            instanciaReceptora: string;
+            dueDate: string;
+            activityType: string;
+            comment: string;
+        };
+        areasWithActivities: any[];
+        handleInputChange: (field: string, value: string) => void;
+        handleSubmit: (e: React.FormEvent) => Promise<void>;
+        setIsModalOpen: (open: boolean) => void;
     }
 
     export function ActivityCreate({
-      formData,
-      areasWithActivities,
-      handleInputChange,
-      handleSubmit,
-      setIsModalOpen
+        formData,
+        areasWithActivities,
+        handleInputChange,
+        handleSubmit,
+        setIsModalOpen
     }: ActivityCreateProps) {
     return (
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">

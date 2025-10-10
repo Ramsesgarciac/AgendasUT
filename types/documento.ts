@@ -7,3 +7,9 @@ export interface Documento {
   archivo: Buffer | null;
   actividad: Actividad;
 }
+
+export interface DocumentForm {
+  nombre: string;
+  tipoDoc: string;
+  file: File | null;
+}
