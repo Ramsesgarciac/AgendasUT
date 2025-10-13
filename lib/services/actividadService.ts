@@ -8,6 +8,10 @@ class ActividadService extends BaseService {
     return this.fetchWithAuth(this.baseUrl);
   };
 
+  getActividadById = async (id: number): Promise<Actividad> => {
+    return this.fetchWithAuth(`${this.baseUrl}/${id}`);
+  };
+
   createActividad = async (data: {
     asunto: string;
     descripcion?: string;
@@ -44,4 +48,4 @@ class ActividadService extends BaseService {
 }
 
 export const actividadService = new ActividadService();
-export const { getActividades, createActividad, updateActividad } = actividadService;
+export const { getActividades, getActividadById, createActividad, updateActividad } = actividadService;

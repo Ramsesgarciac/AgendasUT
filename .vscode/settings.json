@@ -1,13 +1,7 @@
 {
-  "vibrancy.type": "acrylic",
-  "vibrancy.theme": "dark",
-  "vibrancy.effect.brightness": 0.1,  
-  "vibrancy.effect.opacity": 0.2,   
-  "vibrancy.effect.cornerRadius": 10,
-  "vibrancy.effect.useWindowControls": true,
-  "vibrancy.effect.useNativeFrame": true,
-  "vibrancy.effect.blur": true,
-  
+
+  "disable-hardware-acceleration": true,
+
   "window.titleBarStyle": "native",
   "workbench.colorTheme": "SynthWave '84",
   "workbench.iconTheme": "material-icon-theme",

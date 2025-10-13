@@ -52,6 +52,7 @@
                     onChange={(e) => handleInputChange("subject", e.target.value)}
                     required
                     className="w-full"
+                    maxLength={100}
                 />
                 </div>
 

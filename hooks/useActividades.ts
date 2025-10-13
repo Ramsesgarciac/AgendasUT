@@ -80,12 +80,22 @@ export const useActividades = () => {
     }
   };
 
+  const getActividadByIdHandler = async (id: number): Promise<Actividad> => {
+    try {
+      return await actividadService.getActividadById(id);
+    } catch (error) {
+      console.error('Error fetching actividad by id:', error);
+      throw error;
+    }
+  };
+
   return {
     actividades,
     tipoActividades,
     loading,
     error,
     createActividad: createActividadHandler,
-    updateActividad: updateActividadHandler
+    updateActividad: updateActividadHandler,
+    getActividadById: getActividadByIdHandler
   };
 };

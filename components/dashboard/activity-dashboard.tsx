@@ -12,6 +12,7 @@ import {Plus,Calendar,FileText,ChevronDown,Menu,} from "lucide-react"
 import { Notes } from "@/app/notes/page"
 import { CalendarComponent } from "@/app/calendar/page"
 import { Area } from '@/types/area';
+import { Actividad } from '@/types/actividad';
 import { useAreas } from '@/hooks/useAreas';
 import { useActividades } from '@/hooks/useActividades';
 import { useTipoActividades } from '@/hooks/useTipoActividades';
@@ -20,6 +21,7 @@ import { useColeccionComentarios } from '@/hooks/useColeccionComentarios';
 import { coleccionComentariosService } from '@/lib/services/coleccionComentariosService';
 import { ActivityCreate } from '@/components/cards/activityCreate';
 import { DocumentCreate } from '@/components/cards/documentCreate';
+import { ActivityTable } from '@/components/tables/activityTable';
 import { SidebarHeader, SidebarNav } from '@/components/nav/sidebar';
 
 const getColorClasses = (color: Area["color"]) => {
@@ -46,6 +48,7 @@ export default function ActivityDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showDocumentDialog, setShowDocumentDialog] = useState(false)
   const [createdActivityId, setCreatedActivityId] = useState<number | null>(null)
+  const [createdActivity, setCreatedActivity] = useState<Actividad | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [currentView, setCurrentView] = useState<"dashboard" | "notes" | "calendar">("dashboard")
@@ -158,6 +161,12 @@ export default function ActivityDashboard() {
       const nuevaActividad = await createActividad(payload);
       console.log("Actividad creada exitosamente", nuevaActividad);
 
+      // Enrich with area details
+      const areaSeleccionada = areas.find(a => a.id === parseInt(formData.area));
+      if (areaSeleccionada) {
+        nuevaActividad.area = areaSeleccionada;
+      }
+
       // If comment is provided, create it and add to the collection
       if (formData.comment.trim()) {
         const nuevoComentario = await createComentario({
@@ -180,6 +189,7 @@ export default function ActivityDashboard() {
 
       // Open document upload dialog
       setCreatedActivityId(nuevaActividad.id);
+      setCreatedActivity(nuevaActividad);
       setShowDocumentDialog(true);
 
       setIsModalOpen(false)
@@ -230,59 +240,7 @@ export default function ActivityDashboard() {
           <>
             <div className="hidden md:flex h-full">
               <div className="w-full">
-                <table className="w-full border-collapse border border-border rounded-lg">
-                  {/* Table Header */}
-                  <thead className="sticky top-0 bg-blue-500 z-10">
-                    <tr>
-                      {filteredAreas.map((area) => (
-                        <th
-                          key={area.id}
-                          className="border border-border p-2 lg:p-4 text-center min-w-[150px] lg:min-w-[200px] text-white"
-                        >
-                          <div className="flex items-center justify-center gap-2">
-                            <span className="font-semibold text-lg lg:text-lg">{area.name}</span>
-                            <Badge variant="outline" className="bg-white/20 border-white/30 text-white">
-                              {area.activities.length}
-                            </Badge>
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-
-                  {/* Table Body */}
-                  <tbody>
-                    <tr className="h-full">
-                      {filteredAreas.map((area) => (
-                        <td key={area.id} className="border border-border p-2 text-center lg:p-4 align-top h-full">
-                          <div className="space-y-2 lg:space-y-3">
-                            {area.activities.length === 0 ? (
-                              <div className="text-center py-4 lg:py-8 text-muted-foreground">
-                                <FileText className="w-4 h-4 lg:w-6 lg:h-6 mx-auto mb-2 opacity-50" />
-                                <p className="text-xs">No hay actividades</p>
-                              </div>
-                            ) : (
-                              area.activities.map((activity) => (
-                                <div
-                                  key={activity.id}
-                                  className="p-2 lg:p-3 rounded-lg bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors"
-                                >
-                                  <h4 className="font-medium text-xs text-foreground mb-1 lg:mb-2 text-pretty">
-                                    {activity.subject}
-                                  </h4>
-                                  <div className="flex items-center justify-center text-xs text-muted-foreground">
-                                    <Calendar className="w-3 h-3 mr-1" />
-                                    Fecha Límite: {formatDate(activity.fechaLimite as unknown as string)}
-                                  </div>
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        </td>
-                      ))}
-                    </tr>
-                  </tbody>
-                </table>
+                <ActivityTable filteredAreas={filteredAreas} formatDate={formatDate} />
               </div>
             </div>
 
@@ -450,9 +408,10 @@ export default function ActivityDashboard() {
         <div className="flex-1 pl-0 pr-2 pt-2 pb-2 md:pl-1 md:pr-4 md:pt-4 md:pb-4 lg:pl-2 lg:pr-6 lg:pt-6 lg:pb-6 overflow-auto">{renderDashboardContent()}</div>
       </div>
 
-      {createdActivityId && (
+      {createdActivityId && createdActivity && (
         <DocumentCreate
           activityId={createdActivityId}
+          actividad={createdActivity}
           isOpen={showDocumentDialog}
           onClose={() => setShowDocumentDialog(false)}
         />
