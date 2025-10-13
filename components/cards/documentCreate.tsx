@@ -73,7 +73,8 @@ export function DocumentCreate({ activityId, actividad: propActividad, isOpen, o
           <DialogTitle>Subir Documentos para Actividad #{activityId}</DialogTitle>
           {actividad && (
             <div className="mt-2 text-sm text-muted-foreground">
-              <p className="text-lg"><strong>Área:</strong> {actividad.area.name} | <strong>Asunto:</strong> {actividad.asunto}</p>
+              <p className="text-lg"><strong>Área:</strong> {actividad.area.name}</p>
+              <p className="text-lg">| <strong>Asunto:</strong> {actividad.asunto.slice(0, 24)}</p>
             </div>
           )}
         </DialogHeader>
