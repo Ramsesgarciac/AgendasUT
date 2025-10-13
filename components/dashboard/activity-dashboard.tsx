@@ -270,7 +270,7 @@ export default function ActivityDashboard() {
                           {area.activities.map((activity) => (
                             <div key={activity.id} className="p-3 rounded-lg bg-muted/30 border border-border/50">
                               <h4 className="font-medium text-sm text-foreground mb-2 text-pretty">
-                                {activity.subject}
+                                {activity.subject.slice(0,32)}{activity.subject.length > 24 ? '...' : ''}
                               </h4>
                               <div className="flex items-center text-xs text-muted-foreground">
                                 <Calendar className="w-3 h-3 mr-1" />

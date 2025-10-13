@@ -70,11 +70,11 @@ export function DocumentCreate({ activityId, actividad: propActividad, isOpen, o
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Subir Documentos para Actividad #{activityId}</DialogTitle>
+          <DialogTitle>Subir Documentos para Actividad</DialogTitle>
           {actividad && (
             <div className="mt-2 text-sm text-muted-foreground">
               <p className="text-lg"><strong>Área:</strong> {actividad.area.name}</p>
-              <p className="text-lg">| <strong>Asunto:</strong> {actividad.asunto.slice(0, 24)}</p>
+              <p className="text-lg"><strong>Asunto:</strong> {actividad.asunto.slice(0, 24)}{actividad.asunto.length > 24 ? '...' : ''}</p>
             </div>
           )}
         </DialogHeader>

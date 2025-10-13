@@ -60,7 +60,7 @@
                         className="p-2 lg:p-3 rounded-lg bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors"
                         >
                         <h4 className="font-medium text-xs text-foreground mb-1 lg:mb-2 text-pretty">
-                            {activity.subject}
+                            {activity.subject.slice(0, 24)}{activity.subject.length > 24 ? '...' : ''}
                         </h4>
                         <div className="flex items-center justify-center text-xs text-muted-foreground">
                             <Calendar className="w-3 h-3 mr-1" />
