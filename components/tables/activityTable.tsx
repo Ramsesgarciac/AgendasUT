@@ -13,19 +13,8 @@ import {
 import { useInfiniteScroll } from "@heroui/use-infinite-scroll"
 import { Badge } from "@/components/ui/badge"
 import { FileText, Calendar } from "lucide-react"
-
-interface Activity {
-    id: string
-    subject: string
-    fechaLimite: Date | string
-}
-
-interface Area {
-    id: number
-    name: string
-    activities: Activity[]
-}
-
+import { Area, Activity } from "@/types/area"
+//se necesita el props para rrealizar que la card de createactividades tenga en cuenta la la lista de areas
 interface ActivityTableProps {
     filteredAreas: Area[]
     formatDate: (dateString: string) => string
@@ -141,7 +130,7 @@ export function ActivityTable({ filteredAreas, formatDate }: ActivityTableProps)
                                             <div className="flex items-center text-xs text-default-500">
                                                 <Calendar className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" />
                                                 <span className="truncate">
-                                                    {formatDate(activity.fechaLimite as unknown as string)}
+                                                    {formatDate(activity.date)}
                                                 </span>
                                             </div>
                                         </div>

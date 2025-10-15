@@ -86,7 +86,7 @@ export default function ActivityDashboard() {
     }
   }, [areas]);
 
-  const areasWithActivities = useMemo(() => areas.map(area => ({ ...area, activities: actividades.filter(act => act.area.id === area.id).map(act => ({ ...act, id: act.id.toString(), subject: act.asunto })) })), [areas, actividades]);
+  const areasWithActivities = useMemo(() => areas.map(area => ({ ...area, activities: actividades.filter(act => act.area.id === area.id).map(act => ({ ...act, id: act.id.toString(), subject: act.asunto, date: act.fechaLimite.toString() })) })), [areas, actividades]);
 
   const filteredAreas = selectedAreaIds.length === 0 ? [] : areasWithActivities.filter((area) => selectedAreaIds.includes(area.id))
 
