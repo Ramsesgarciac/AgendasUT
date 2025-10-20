@@ -1,12 +1,7 @@
-export interface Activity {
-  id: string;
-  subject: string;
-  date: string;
-}
-
 export interface TipoArea {
   id: number;
   nombre: string;
+  areas: Area[];
 }
 
 export interface Area {
@@ -14,5 +9,10 @@ export interface Area {
   name: string;
   activities: Activity[];
   color: "primary" | "secondary" | "accent" | "chart-4" | "chart-5";
-  tipoArea: TipoArea;
+}
+
+export interface Activity {
+  id: string;
+  subject: string;
+  date: string;
 }

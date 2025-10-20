@@ -16,6 +16,7 @@ import { Actividad } from '@/types/actividad';
 import { useAreas } from '@/hooks/useAreas';
 import { useActividades } from '@/hooks/useActividades';
 import { useTipoActividades } from '@/hooks/useTipoActividades';
+import { useTipoAreas } from '@/hooks/useTipoAreas';
 import { useComentarios } from '@/hooks/useComentarios';
 import { useColeccionComentarios } from '@/hooks/useColeccionComentarios';
 import { coleccionComentariosService } from '@/lib/services/coleccionComentariosService';
@@ -39,12 +40,14 @@ export default function ActivityDashboard() {
   const { areas, loading: areasLoading, error: areasError } = useAreas();
   const { actividades, loading: actividadesLoading, error: actividadesError, createActividad } = useActividades();
   const { tipoActividades } = useTipoActividades();
+  const { tipoAreas, loading: tipoAreasLoading, error: tipoAreasError } = useTipoAreas();
   const { createComentario } = useComentarios();
   const { coleccionComentarios, refetch, addComentariosToColeccion } = useColeccionComentarios();
 
-  const loading = areasLoading || actividadesLoading;
-  const error = areasError || actividadesError;
+  const loading = areasLoading || actividadesLoading || tipoAreasLoading;
+  const error = areasError || actividadesError || tipoAreasError;
   const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([])
+  const [selectedTipoAreaId, setSelectedTipoAreaId] = useState<number | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showDocumentDialog, setShowDocumentDialog] = useState(false)
   const [createdActivityId, setCreatedActivityId] = useState<number | null>(null)
@@ -86,9 +89,21 @@ export default function ActivityDashboard() {
     }
   }, [areas]);
 
+  // Initialize selectedTipoAreaId when tipoAreas load
+  useEffect(() => {
+    if (tipoAreas.length > 0 && selectedTipoAreaId === null) {
+      setSelectedTipoAreaId(tipoAreas[0].id);
+    }
+  }, [tipoAreas, selectedTipoAreaId]);
+
   const areasWithActivities = useMemo(() => areas.map(area => ({ ...area, activities: actividades.filter(act => act.area.id === area.id).map(act => ({ ...act, id: act.id.toString(), subject: act.asunto, date: act.fechaLimite.toString() })) })), [areas, actividades]);
 
-  const filteredAreas = selectedAreaIds.length === 0 ? [] : areasWithActivities.filter((area) => selectedAreaIds.includes(area.id))
+  const filteredAreasByTipo = useMemo(() => {
+    if (selectedTipoAreaId === null) return areasWithActivities;
+    return areasWithActivities.filter((area) => area.tipoArea && area.tipoArea.id === selectedTipoAreaId);
+  }, [areasWithActivities, selectedTipoAreaId]);
+
+  const filteredAreas = selectedAreaIds.length === 0 ? [] : filteredAreasByTipo.filter((area) => selectedAreaIds.includes(area.id))
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -104,11 +119,21 @@ export default function ActivityDashboard() {
   }
 
   const handleSelectAll = () => {
-    setSelectedAreaIds(areasWithActivities.map((area) => area.id))
+    setSelectedAreaIds(filteredAreasByTipo.map((area) => area.id))
   }
 
   const handleClearAll = () => {
     setSelectedAreaIds([])
+  }
+
+  const handleTipoAreaSelect = (tipoAreaId: number) => {
+    setSelectedTipoAreaId(tipoAreaId)
+  }
+
+  const getSelectedTipoAreasText = () => {
+    if (selectedTipoAreaId === null) return "Ningún tipo de área seleccionada"
+    const tipoArea = tipoAreas.find((ta) => ta.id === selectedTipoAreaId)
+    return tipoArea?.nombre || ""
   }
 
   const getSelectedAreasText = () => {
@@ -339,13 +364,42 @@ export default function ActivityDashboard() {
                   
                 </h1>
                 <p className="text-sm md:text-base text-muted-foreground">
-                  {currentView === "dashboard" && "Gestiona las actividades de todas las áreas de la UTVCO"}
+                  {currentView === "dashboard" && `Gestiona las actividades de ${getSelectedTipoAreasText().toLowerCase()} de la UTVCO`}
                 </p>
               </div>
             </div>
 
             {currentView === "dashboard" && (
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full sm:w-[250px] justify-between bg-transparent">
+                      <span className="truncate">{getSelectedTipoAreasText()}</span>
+                      <ChevronDown className="w-4 h-4 ml-2 flex-shrink-0" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0" align="end">
+                    <div className="max-h-[300px] overflow-y-auto">
+                      {tipoAreas.map((tipoArea) => (
+                        <div
+                          key={tipoArea.id}
+                          className="flex items-center space-x-2 p-3 hover:bg-muted/50 cursor-pointer"
+                          onClick={() => handleTipoAreaSelect(tipoArea.id)}
+                        >
+                          <input
+                            type="radio"
+                            name="tipoArea"
+                            checked={selectedTipoAreaId === tipoArea.id}
+                            onChange={() => handleTipoAreaSelect(tipoArea.id)}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm flex-1">{tipoArea.nombre}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full sm:w-[250px] justify-between bg-transparent">
@@ -365,7 +419,7 @@ export default function ActivityDashboard() {
                       </div>
                     </div>
                     <div className="max-h-[300px] overflow-y-auto">
-                      {areasWithActivities.map((area) => (
+                      {filteredAreasByTipo.map((area) => (
                         <div
                           key={area.id}
                           className="flex items-center space-x-2 p-3 hover:bg-muted/50 cursor-pointer"

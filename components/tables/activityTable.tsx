@@ -29,17 +29,23 @@ export function ActivityTable({ filteredAreas, formatDate }: ActivityTableProps)
 
     // Initialize displayed activities
     React.useEffect(() => {
-        setIsLoading(true)
-        const initial: Record<number, Activity[]> = {}
-        filteredAreas.forEach(area => {
-            initial[area.id] = area.activities.slice(0, INITIAL_ITEMS)
-        })
-        setDisplayedActivities(initial)
-        
-        // Check if there are more items to load
-        const hasMoreItems = filteredAreas.some(area => area.activities.length > INITIAL_ITEMS)
-        setHasMore(hasMoreItems)
-        setIsLoading(false)
+        if (filteredAreas.length > 0) {
+            setIsLoading(true)
+            const initial: Record<number, Activity[]> = {}
+            filteredAreas.forEach(area => {
+                initial[area.id] = area.activities.slice(0, INITIAL_ITEMS)
+            })
+            setDisplayedActivities(initial)
+
+            // Check if there are more items to load
+            const hasMoreItems = filteredAreas.some(area => area.activities.length > INITIAL_ITEMS)
+            setHasMore(hasMoreItems)
+
+            // Simulate loading delay
+            setTimeout(() => {
+                setIsLoading(false)
+            }, 500)
+        }
     }, [filteredAreas])
 
     const loadMore = React.useCallback(() => {

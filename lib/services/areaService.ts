@@ -19,5 +19,6 @@ export const getAreas = async (): Promise<Area[]> => {
     name: area.nombre,
     activities: area.actividades || [],
     color: colors[index % colors.length],
+    tipoArea: area.tipoArea,
   }));
 };
