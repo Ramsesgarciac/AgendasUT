@@ -12,4 +12,5 @@ export interface DocumentForm {
   nombre: string;
   tipoDoc: string;
   file: File | null;
+  entregaId: number;
 }
