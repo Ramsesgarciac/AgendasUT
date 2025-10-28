@@ -4,7 +4,7 @@ import { Documento } from '../types/documento';
 
 interface UploadDocumentosData {
   files: File[];
-  documentos: { nombre: string; tipoDoc: string; idActividades: number }[];
+  documentos: { nombre: string; tipoDoc: string; idActividades: number; entregaId: number }[];
 }
 
 export const useDocumentos = () => {

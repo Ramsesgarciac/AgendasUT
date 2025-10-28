@@ -3,8 +3,8 @@ import BaseService from './baseService';
 
 class DocumentoService extends BaseService {
   uploadMultiple = async (
-    files: File[], 
-    documentos: { nombre: string; tipoDoc: string; idActividades: number }[]
+    files: File[],
+    documentos: { nombre: string; tipoDoc: string; idActividades: number; entregaId: number }[]
   ): Promise<Documento[]> => {
     const formData = new FormData();
     

@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useDocumentos } from "@/hooks/useDocumentos"
 import { useActividades } from "@/hooks/useActividades"
+import { useEntregas } from "@/hooks/useEntregas"
 import { DocumentForm } from "@/types/documento"
 import { Actividad } from "@/types/actividad"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Trash2 } from "lucide-react"
 
 interface DocumentCreateProps {
@@ -21,21 +23,22 @@ interface DocumentCreateProps {
 export function DocumentCreate({ activityId, actividad: propActividad, isOpen, onClose }: DocumentCreateProps) {
   const { uploadDocumentos, loading, error } = useDocumentos()
   const { actividades } = useActividades()
+  const { entregas } = useEntregas()
   const [documentos, setDocumentos] = useState<DocumentForm[]>([
-    { nombre: "", tipoDoc: "", file: null }
+    { nombre: "", tipoDoc: "", file: null, entregaId: 0 }
   ])
 
   const actividad = propActividad || actividades.find(act => act.id === activityId) || null
 
   const addDocument = () => {
-    setDocumentos([...documentos, { nombre: "", tipoDoc: "", file: null }])
+    setDocumentos([...documentos, { nombre: "", tipoDoc: "", file: null, entregaId: 0 }])
   }
 
   const removeDocument = (index: number) => {
     setDocumentos(documentos.filter((_, i) => i !== index))
   }
 
-  const updateDocument = (index: number, field: keyof DocumentForm, value: string | File | null) => {
+  const updateDocument = (index: number, field: keyof DocumentForm, value: string | File | null | number) => {
     const newDocumentos = [...documentos]
     newDocumentos[index] = { ...newDocumentos[index], [field]: value }
     setDocumentos(newDocumentos)
@@ -54,13 +57,14 @@ export function DocumentCreate({ activityId, actividad: propActividad, isOpen, o
     const docsData = validDocumentos.map(d => ({
       nombre: d.nombre,
       tipoDoc: d.tipoDoc,
-      idActividades: activityId
+      idActividades: activityId,
+      entregaId: d.entregaId
     }))
 
     try {
       await uploadDocumentos({ files, documentos: docsData })
       onClose()
-      setDocumentos([{ nombre: "", tipoDoc: "", file: null }])
+      setDocumentos([{ nombre: "", tipoDoc: "", file: null, entregaId: 0 }])
     } catch (err) {
       console.error("Error subiendo documentos:", err)
     }
@@ -120,6 +124,22 @@ export function DocumentCreate({ activityId, actividad: propActividad, isOpen, o
                       required
                     />
                   </div>
+                </div>
+
+                <div>
+                  <Label htmlFor={`entrega-${index}`}>Entrega</Label>
+                  <Select onValueChange={(value) => updateDocument(index, 'entregaId', parseInt(value))}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Selecciona una entrega" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {entregas.map((entrega) => (
+                        <SelectItem key={entrega.id} value={entrega.id.toString()}>
+                          {entrega.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
