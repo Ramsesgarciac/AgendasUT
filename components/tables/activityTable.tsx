@@ -104,9 +104,9 @@ export function ActivityTable({ filteredAreas, formatDate }: ActivityTableProps)
         >
             <TableHeader className="sticky top-0 z-20 bg-blue-500 h-16 w-full">
                 {filteredAreas.map((area) => (
-                    <TableColumn
+                    <TableColumn 
                         key={area.id}
-                        style={{ width: `${100 / filteredAreas.length}%` }}
+                        className="min-w-[150px] lg:min-w-[100px]"
                     >
                         <div className="flex items-center justify-center gap-2">
                             <span className="font-semibold text-base">{area.name}</span>

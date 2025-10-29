@@ -23,6 +23,7 @@ import { coleccionComentariosService } from '@/lib/services/coleccionComentarios
 import { ActivityCreate } from '@/components/cards/activityCreate';
 import { DocumentCreate } from '@/components/cards/documentCreate';
 import { ActivityTable } from '@/components/tables/activityTable';
+import { ActivityViewCard } from '@/components/cards/activityViewCard';
 import { SidebarHeader, SidebarNav } from '@/components/nav/sidebar';
 
 const getColorClasses = (color: Area["color"]) => {
@@ -272,41 +273,7 @@ export default function ActivityDashboard() {
             <div className="md:hidden overflow-auto">
               <div className="space-y-4">
                 {filteredAreas.map((area) => (
-                  <div key={area.id} className="border border-border rounded-lg bg-card">
-                    {/* Area Header */}
-                    <div className="p-4 border-b border-border bg-blue-500">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-sm text-white">{area.name}</h3>
-                        <Badge variant="outline" className="bg-white/20 border-white/30 text-white">
-                          {area.activities.length}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {/* Activities List */}
-                    <div className="p-4">
-                      {area.activities.length === 0 ? (
-                        <div className="text-center py-6 text-muted-foreground">
-                          <FileText className="w-5 h-5 mx-auto mb-2 opacity-50" />
-                          <p className="text-xs">No hay actividades</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {area.activities.map((activity) => (
-                            <div key={activity.id} className="p-3 rounded-lg bg-muted/30 border border-border/50">
-                              <h4 className="font-medium text-sm text-foreground mb-2 text-pretty">
-                                {activity.subject.slice(0,32)}{activity.subject.length > 24 ? '...' : ''}
-                              </h4>
-                              <div className="flex items-center text-xs text-muted-foreground">
-                                <Calendar className="w-3 h-3 mr-1" />
-                                Fecha Límite: {formatDate(activity.fechaLimite as unknown as string)}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <ActivityViewCard key={area.id} area={area} formatDate={formatDate} />
                 ))}
               </div>
             </div>
