@@ -32,7 +32,7 @@ export function ActivityViewCard({ area, formatDate }: ActivityViewCardProps) {
             ) : (
             <div className="space-y-3">
                 {area.activities.map((activity) => (
-                  <ModalWithTabs key={activity.id}>
+                  <ModalWithTabs key={activity.id} activity={{ id: parseInt(activity.id), subject: activity.subject, date: activity.date }}>
                     <div className="p-3 rounded-lg bg-muted/30 border border-border/50 cursor-pointer hover:bg-muted/50 transition-colors">
                       <h4 className="font-medium text-sm text-foreground mb-2 text-pretty">
                         {activity.subject.slice(0,32)}{activity.subject.length > 24 ? '...' : ''}

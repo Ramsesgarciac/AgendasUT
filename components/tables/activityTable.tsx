@@ -14,6 +14,7 @@ import { useInfiniteScroll } from "@heroui/use-infinite-scroll"
 import { Badge } from "@/components/ui/badge"
 import { FileText, Calendar } from "lucide-react"
 import { Area, Activity } from "@/types/area"
+import { ModalWithTabs } from "@/components/cards/activityDetail"
 //se necesita el props para rrealizar que la card de createactividades tenga en cuenta la la lista de areas
 interface ActivityTableProps {
     filteredAreas: Area[]
@@ -129,17 +130,19 @@ export function ActivityTable({ filteredAreas, formatDate }: ActivityTableProps)
                             return (
                                 <TableCell key={area.id}>
                                     {activity ? (
-                                        <div className="p-3 rounded-lg bg-default-50 border border-default-200 hover:bg-default-100 transition-all duration-200 cursor-pointer shadow-sm">
-                                            <h4 className="font-medium text-sm text-foreground mb-2 line-clamp-2">
-                                                {activity.subject.slice(0, 24)}{activity.subject.length > 24 ? '...' : ''}    
-                                            </h4>
-                                            <div className="flex items-center text-xs text-default-500">
-                                                <Calendar className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" />
-                                                <span className="truncate">
-                                                    {formatDate(activity.date)}
-                                                </span>
+                                        <ModalWithTabs activity={{ id: parseInt(activity.id), subject: activity.subject, date: activity.date }}>
+                                            <div className="p-3 rounded-lg bg-default-50 border border-default-200 hover:bg-default-100 transition-all duration-200 cursor-pointer shadow-sm">
+                                                <h4 className="font-medium text-sm text-foreground mb-2 line-clamp-2">
+                                                    {activity.subject.slice(0, 24)}{activity.subject.length > 24 ? '...' : ''}
+                                                </h4>
+                                                <div className="flex items-center text-xs text-default-500">
+                                                    <Calendar className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" />
+                                                    <span className="truncate">
+                                                        {formatDate(activity.date)}
+                                                    </span>
+                                                </div>
                                             </div>
-                                        </div>
+                                        </ModalWithTabs>
                                     ) : rowIndex === 0 && displayedActivities[area.id]?.length === 0 ? (
                                         <div className="text-center py-6 text-default-400">
                                             <FileText className="w-5 h-5 mx-auto mb-2 opacity-40" />
