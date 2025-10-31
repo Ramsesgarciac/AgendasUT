@@ -8,6 +8,7 @@ import { Calendar, Building2, User, Clock, FileText, AlertCircle } from "lucide-
 import { getActividadById } from "@/lib/services/actividadService"
 import { Actividad } from "@/types/actividad"
 import { useStatus } from "@/hooks/useStatus"
+import { useUsuarios } from "@/hooks/useUsuarios"
 
 interface ModalWithTabsProps {
     children: React.ReactNode
@@ -19,6 +20,7 @@ export function ModalWithTabs({ children, activity }: ModalWithTabsProps) {
     const [fullActivity, setFullActivity] = useState<Actividad | null>(null)
     const [loading, setLoading] = useState(false)
     const { status: statusList } = useStatus()
+    const { usuarios } = useUsuarios()
 
     useEffect(() => {
         if (open && activity.id) {
@@ -107,10 +109,10 @@ export function ModalWithTabs({ children, activity }: ModalWithTabsProps) {
                                             label="Tipo de Actividad"
                                             value={fullActivity.tipoActividad}
                                         />
-                                        <InfoCard 
+                                        <InfoCard
                                             icon={User}
                                             label="Usuario Creador"
-                                            value={String(fullActivity.userCreate.id)}
+                                            value={usuarios.find(u => u.id === fullActivity.userCreate.id)?.rol || String(fullActivity.userCreate.id)}
                                         />
                                     </div>
 
