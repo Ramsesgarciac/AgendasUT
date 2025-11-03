@@ -6,6 +6,7 @@ export interface Documento {
   tipoDoc: string;
   archivo: Buffer | null;
   actividad: Actividad;
+  isAcuce: boolean;
 }
 
 export interface DocumentForm {

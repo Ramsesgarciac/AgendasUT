@@ -1,5 +1,6 @@
 import { Documento } from '../../types/documento';
 import BaseService from './baseService';
+import jsPDF from 'jspdf';
 
 class DocumentoService extends BaseService {
   private baseUrl = '/api/documentos';
@@ -73,8 +74,39 @@ class DocumentoService extends BaseService {
       formData.append('archivos', file);
     });
 
+    // Generar PDF de acuse para cada documento
+    const acusePromises = documentos.map(async (doc, index) => {
+      const docPDF = new jsPDF();
+      docPDF.setFontSize(16);
+      docPDF.text('Acuse de Recepción de Documento', 20, 30);
+      docPDF.setFontSize(12);
+      docPDF.text(`Nombre del Documento: ${doc.nombre}`, 20, 50);
+      docPDF.text(`Tipo de Documento: ${doc.tipoDoc}`, 20, 60);
+      docPDF.text(`ID de Actividad: ${doc.idActividades}`, 20, 70);
+      docPDF.text(`Fecha de Subida: ${new Date().toLocaleString()}`, 20, 80);
+      docPDF.text('Documento recibido correctamente.', 20, 100);
+
+      const pdfBlob = docPDF.output('blob');
+      const acuseFile = new File([pdfBlob], `acuse_${doc.nombre}.pdf`, { type: 'application/pdf' });
+      formData.append('archivos', acuseFile);
+
+      // Agregar datos del acuse
+      return {
+        nombre: `Acuse_${doc.nombre}`,
+        tipoDoc: 'Acuse',
+        idActividades: doc.idActividades,
+        entregaId: doc.entregaId,
+        isAcuce: true
+      };
+    });
+
+    const acuseData = await Promise.all(acusePromises);
+
+    // Combinar documentos originales con acuses
+    const allDocumentos = [...documentos, ...acuseData];
+
     // Agregar los datos de los documentos como JSON string
-    formData.append('documentos', JSON.stringify(documentos));
+    formData.append('documentos', JSON.stringify(allDocumentos));
 
     // Usar URL completa para consistencia
     return this.fetchWithAuth('/api/documentos/multiple', {
