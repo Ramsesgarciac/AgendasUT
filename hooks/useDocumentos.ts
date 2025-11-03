@@ -59,6 +59,22 @@ export const useDocumentos = () => {
     }
   };
 
+  const updateDocumentoWithFile = async (id: number, data: { nombre: string; tipoDoc: string }, file?: File): Promise<Documento> => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await documentoService.updateDocumentoWithFile(id, data, file);
+      return result;
+    } catch (err) {
+      console.error('Error updating documento with file:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const deleteDocumento = async (id: number): Promise<void> => {
     try {
       setLoading(true);
@@ -90,13 +106,48 @@ export const useDocumentos = () => {
     }
   };
 
+  const downloadDocumento = async (id: number): Promise<Blob> => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await documentoService.downloadDocumento(id);
+      return result;
+    } catch (err) {
+      console.error('Error downloading documento:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const viewDocumento = async (id: number): Promise<string> => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await documentoService.viewDocumento(id);
+      return result;
+    } catch (err) {
+      console.error('Error viewing documento:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     error,
     getDocumentos,
     getDocumentoById,
     updateDocumento,
+    updateDocumentoWithFile,
     deleteDocumento,
     uploadDocumentos,
+    downloadDocumento,
+    viewDocumento,
   };
 };

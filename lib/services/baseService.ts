@@ -29,6 +29,23 @@ class BaseService {
 
     return response.json();
   }
+
+  protected async fetchWithAuthBlob(url: string, options: RequestInit = {}): Promise<Response> {
+    const baseHeaders = this.getAuthHeaders();
+    const headers: Record<string, string> = {
+      ...(baseHeaders as Record<string, string>),
+      ...(options.headers as Record<string, string>),
+    };
+
+    if (options.body instanceof FormData) {
+      delete headers['Content-Type'];
+    }
+
+    return fetch(url, {
+      ...options,
+      headers,
+    });
+  }
 }
 
 export default BaseService;

@@ -2,7 +2,7 @@ import { Documento } from '../../types/documento';
 import BaseService from './baseService';
 
 class DocumentoService extends BaseService {
-  private baseUrl = 'http://localhost:3001/documentos';
+  private baseUrl = '/api/documentos';
 
   getDocumentos = async (): Promise<Documento[]> => {
     return this.fetchWithAuth(this.baseUrl);
@@ -19,10 +19,47 @@ class DocumentoService extends BaseService {
     });
   };
 
+  updateDocumentoWithFile = async (id: number, data: { nombre: string; tipoDoc: string }, file?: File): Promise<Documento> => {
+    if (file) {
+      const formData = new FormData();
+      formData.append('archivo', file);
+      formData.append('nombre', data.nombre);
+      formData.append('tipoDoc', data.tipoDoc);
+
+      return this.fetchWithAuth(`${this.baseUrl}/${id}`, {
+        method: 'PATCH',
+        body: formData,
+      });
+    } else {
+      return this.updateDocumento(id, data);
+    }
+  };
+
   deleteDocumento = async (id: number): Promise<void> => {
     return this.fetchWithAuth(`${this.baseUrl}/${id}`, {
       method: 'DELETE',
     });
+  };
+
+  downloadDocumento = async (id: number): Promise<Blob> => {
+    const response = await this.fetchWithAuthBlob(`${this.baseUrl}/${id}/download`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.blob();
+  };
+
+  viewDocumento = async (id: number): Promise<string> => {
+    const response = await this.fetchWithAuthBlob(`${this.baseUrl}/${id}/ver`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
   };
 
   uploadMultiple = async (
@@ -39,7 +76,7 @@ class DocumentoService extends BaseService {
     // Agregar los datos de los documentos como JSON string
     formData.append('documentos', JSON.stringify(documentos));
 
-    // Usar ruta relativa en lugar de URL completa
+    // Usar URL completa para consistencia
     return this.fetchWithAuth('/api/documentos/multiple', {
       method: 'POST',
       body: formData,
