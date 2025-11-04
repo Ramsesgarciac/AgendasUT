@@ -74,33 +74,36 @@ class DocumentoService extends BaseService {
       formData.append('archivos', file);
     });
 
-    // Generar PDF de acuse para cada documento
-    const acusePromises = documentos.map(async (doc, index) => {
+    // Generar un solo PDF de acuse para todos los documentos
+    const acusePromise = (async () => {
       const docPDF = new jsPDF();
       docPDF.setFontSize(16);
-      docPDF.text('Acuse de Recepción de Documento', 20, 30);
+      docPDF.text('Acuse de Recepción de Documentos', 20, 30);
       docPDF.setFontSize(12);
-      docPDF.text(`Nombre del Documento: ${doc.nombre}`, 20, 50);
-      docPDF.text(`Tipo de Documento: ${doc.tipoDoc}`, 20, 60);
-      docPDF.text(`ID de Actividad: ${doc.idActividades}`, 20, 70);
-      docPDF.text(`Fecha de Subida: ${new Date().toLocaleString()}`, 20, 80);
-      docPDF.text('Documento recibido correctamente.', 20, 100);
+      docPDF.text(`Fecha de Subida: ${new Date().toLocaleString()}`, 20, 50);
+      docPDF.text('Al respecto se emite este presente digital y se adjunta la evidencia correspondiente', 20, 60);
+      docPDF.text('Documentos recibidos correctamente:', 20, 70);
+
+      documentos.forEach((doc, index) => {
+        const yPos = 90 + (index * 20);
+        docPDF.text(`${index + 1}. Nombre: ${doc.nombre} - Tipo: ${doc.tipoDoc} - Actividad ID: ${doc.idActividades}`, 20, yPos);
+      });
 
       const pdfBlob = docPDF.output('blob');
-      const acuseFile = new File([pdfBlob], `acuse_${doc.nombre}.pdf`, { type: 'application/pdf' });
+      const acuseFile = new File([pdfBlob], `acuse_documentos_${Date.now()}.pdf`, { type: 'application/pdf' });
       formData.append('archivos', acuseFile);
 
-      // Agregar datos del acuse
+      // Agregar datos del acuse (uno solo)
       return {
-        nombre: `Acuse_${doc.nombre}`,
+        nombre: `Acuse_Documentos_${Date.now()}`,
         tipoDoc: 'Acuse',
-        idActividades: doc.idActividades,
-        entregaId: doc.entregaId,
+        idActividades: documentos[0].idActividades, // Usar la primera actividad
+        entregaId: documentos[0].entregaId, // Usar la primera entrega
         isAcuce: true
       };
-    });
+    })();
 
-    const acuseData = await Promise.all(acusePromises);
+    const acuseData = [await acusePromise];
 
     // Combinar documentos originales con acuses
     const allDocumentos = [...documentos, ...acuseData];
