@@ -121,7 +121,7 @@ export function ModalWithTabs({ children, activity }: ModalWithTabsProps) {
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+            <DialogContent className="max-w-4xl h-[70vh] overflow-hidden flex flex-col">
                 <DialogHeader className="pb-4 border-b">
                     <DialogTitle className="text-2xl font-bold text-gray-900">
                         {fullActivity?.asunto || "Detalles de Actividad"}
@@ -129,7 +129,7 @@ export function ModalWithTabs({ children, activity }: ModalWithTabsProps) {
                 </DialogHeader>
                 
                 <Tabs defaultValue="apartado1" className="w-full flex-1 flex flex-col overflow-hidden">
-                    <TabsList className="grid w-full grid-cols-2 bg-gray-100 rounded-lg p-1 mb-4">
+                    <TabsList className="grid w-full grid-cols-2 bg-transparent rounded-lg p-1 mb-4">
                         <TabsTrigger
                             value="apartado1"
                             className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600 transition-all py-2.5 font-medium"
