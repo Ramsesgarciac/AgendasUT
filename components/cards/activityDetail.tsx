@@ -256,58 +256,114 @@ export function ModalWithTabs({ children, activity }: ModalWithTabsProps) {
                                     <p className="text-gray-500 font-medium">Cargando documentos...</p>
                                 </div>
                             ) : documentos.length > 0 ? (
-                                <div className="space-y-3">
-                                    {documentos.map(doc => (
-                                        <div
-                                            key={doc.id}
-                                            className="bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200 p-4"
-                                        >
-                                            <div className="flex items-center justify-between gap-4">
-                                                {/* Icon and Info */}
-                                                <div className="flex items-center gap-4 flex-1 min-w-0">
-                                                    
-                                                    <div className="flex-1 min-w-0">
-                                                        <h4 className="font-semibold text-gray-900 text-sm truncate">
-                                                            {doc.nombre}
-                                                        </h4>
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700 mt-1">
-                                                            {doc.tipoDoc}
-                                                        </span>
-                                                    </div>
-                                                </div>
+                                <div className="space-y-6">
+                                    {/* Documentos Regulares */}
+                                    {(() => {
+                                        const regularDocs = documentos.filter(doc => doc.tipoDoc !== 'Acuse');
+                                        const acuseDocs = documentos.filter(doc => doc.tipoDoc === 'Acuse');
 
-                                                {/* Action Buttons */}
-                                                <div className="flex items-center gap-2 flex-shrink-0">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleViewDocumento(doc)}
-                                                        className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors"
-                                                    >
-                                                        <Eye className="w-4 h-4 mr-1.5" />
-                                                        Ver
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleEditDocumento(doc)}
-                                                        className="hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300 transition-colors"
-                                                    >
-                                                        <Edit2 className="w-4 h-4 mr-1.5" />
-                                                        Editar
-                                                    </Button>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleDeleteDocumento(doc.id)}
-                                                        className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        return (
+                                            <>
+                                                {regularDocs.length > 0 && (
+                                                    <div className="space-y-3">
+                                                        <h4 className="text-lg font-semibold text-gray-800">Documentos</h4>
+                                                        {regularDocs.map(doc => (
+                                                            <div
+                                                                key={doc.id}
+                                                                className="bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200 p-4"
+                                                            >
+                                                                <div className="flex items-center justify-between gap-4">
+                                                                    {/* Icon and Info */}
+                                                                    <div className="flex items-center gap-4 flex-1 min-w-0">
+
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <h4 className="font-semibold text-gray-900 text-sm truncate">
+                                                                                {doc.nombre}
+                                                                            </h4>
+                                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700 mt-1">
+                                                                                {doc.tipoDoc}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Action Buttons */}
+                                                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            onClick={() => handleViewDocumento(doc)}
+                                                                            className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors"
+                                                                        >
+                                                                            <Eye className="w-4 h-4 mr-1.5" />
+                                                                            Ver
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            onClick={() => handleEditDocumento(doc)}
+                                                                            className="hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300 transition-colors"
+                                                                        >
+                                                                            <Edit2 className="w-4 h-4 mr-1.5" />
+                                                                            Editar
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            onClick={() => handleDeleteDocumento(doc.id)}
+                                                                            className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
+                                                                        >
+                                                                            <Trash2 className="w-4 h-4" />
+                                                                        </Button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* Acuses */}
+                                                {acuseDocs.length > 0 && (
+                                                    <div className="space-y-3">
+                                                        <h4 className="text-lg font-semibold text-gray-800">Acuses de Recepción</h4>
+                                                        {acuseDocs.map(doc => (
+                                                            <div
+                                                                key={doc.id}
+                                                                className="bg-green-50 rounded-lg border border-green-200 hover:border-green-300 hover:shadow-md transition-all duration-200 p-4"
+                                                            >
+                                                                <div className="flex items-center justify-between gap-4">
+                                                                    {/* Icon and Info */}
+                                                                    <div className="flex items-center gap-4 flex-1 min-w-0">
+
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <h4 className="font-semibold text-gray-900 text-sm truncate">
+                                                                                {doc.nombre}
+                                                                            </h4>
+                                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 mt-1">
+                                                                                {doc.tipoDoc}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Action Buttons - Solo Ver para acuses */}
+                                                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            onClick={() => handleViewDocumento(doc)}
+                                                                            className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors"
+                                                                        >
+                                                                            <Eye className="w-4 h-4 mr-1.5" />
+                                                                            Ver
+                                                                        </Button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-16 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
