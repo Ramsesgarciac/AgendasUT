@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Calendar, Building2, User, Clock, FileText, AlertCircle, Download, Edit2, Trash2, FileIcon, Eye } from "lucide-react"
+import { Calendar, Building2, User, Clock, FileText, AlertCircle, Download, Edit2, Trash2, FileIcon, Eye, Plus } from "lucide-react"
 import { getActividadById } from "@/lib/services/actividadService"
 import { Actividad } from "@/types/actividad"
 import { useStatus } from "@/hooks/useStatus"
@@ -12,6 +12,7 @@ import { useUsuarios } from "@/hooks/useUsuarios"
 import { useDocumentos } from "@/hooks/useDocumentos"
 import { Documento } from "@/types/documento"
 import { DocumentEdit } from "./documentEdit"
+import { DocumentCreate } from "./documentCreate"
 
 interface ModalWithTabsProps {
     children: React.ReactNode
@@ -25,6 +26,7 @@ export function ModalWithTabs({ children, activity }: ModalWithTabsProps) {
     const [documentos, setDocumentos] = useState<Documento[]>([])
     const [selectedDoc, setSelectedDoc] = useState<Documento | null>(null)
     const [isEditMode, setIsEditMode] = useState(false)
+    const [isCreateMode, setIsCreateMode] = useState(false)
     const { status: statusList } = useStatus()
     const { usuarios } = useUsuarios()
     const { getDocumentos, deleteDocumento, downloadDocumento, viewDocumento, loading: documentosLoading } = useDocumentos()
@@ -250,6 +252,15 @@ export function ModalWithTabs({ children, activity }: ModalWithTabsProps) {
                                     loadDocumentos() // Recargar documentos después de guardar
                                 }}
                             />
+                            <DocumentCreate
+                                activityId={activity.id}
+                                actividad={fullActivity}
+                                isOpen={isCreateMode}
+                                onClose={() => {
+                                    setIsCreateMode(false)
+                                    loadDocumentos() // Recargar documentos después de crear
+                                }}
+                            />
                             {documentosLoading ? (
                                 <div className="flex flex-col items-center justify-center py-12 space-y-4">
                                     <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
@@ -266,7 +277,16 @@ export function ModalWithTabs({ children, activity }: ModalWithTabsProps) {
                                             <>
                                                 {regularDocs.length > 0 && (
                                                     <div className="space-y-3">
-                                                        <h4 className="text-lg font-semibold text-gray-800">Documentos</h4>
+                                                        <div className="flex items-center justify-between">
+                                                            <h4 className="text-lg font-semibold text-gray-800">Documentos</h4>
+                                                            <Button
+                                                                onClick={() => setIsCreateMode(true)}
+                                                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                            >
+                                                                <Plus className="w-4 h-4 mr-2" />
+                                                                Agregar Documento
+                                                            </Button>
+                                                        </div>
                                                         {regularDocs.map(doc => (
                                                             <div
                                                                 key={doc.id}
@@ -374,6 +394,15 @@ export function ModalWithTabs({ children, activity }: ModalWithTabsProps) {
                                     <p className="text-sm text-gray-500">
                                         Aún no se han subido documentos para esta actividad
                                     </p>
+                                    <div className="flex items-center justify-between p-4">
+                                                            <Button
+                                                                onClick={() => setIsCreateMode(true)}
+                                                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                            >
+                                                                <Plus className="w-4 h-4 mr-2" />
+                                                                Agregar Documento
+                                                            </Button>
+                                                        </div>
                                 </div>
                             )}
                         </TabsContent>
