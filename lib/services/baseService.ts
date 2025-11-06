@@ -18,9 +18,14 @@ class BaseService {
       delete headers['Content-Type'];
     }
 
-    const response = await fetch(url, {
+    // Add timestamp to prevent caching issues
+    const separator = url.includes('?') ? '&' : '?';
+    const urlWithTimestamp = `${url}${separator}_t=${Date.now()}`;
+
+    const response = await fetch(urlWithTimestamp, {
       ...options,
       headers,
+      cache: 'reload',
     });
 
     if (!response.ok) {
@@ -41,9 +46,14 @@ class BaseService {
       delete headers['Content-Type'];
     }
 
-    return fetch(url, {
+    // Add timestamp to prevent caching issues
+    const separator = url.includes('?') ? '&' : '?';
+    const urlWithTimestamp = `${url}${separator}_t=${Date.now()}`;
+
+    return fetch(urlWithTimestamp, {
       ...options,
       headers,
+      cache: 'reload',
     });
   }
 }

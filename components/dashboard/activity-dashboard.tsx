@@ -193,32 +193,25 @@ export default function ActivityDashboard() {
         nuevaActividad.area = areaSeleccionada;
       }
 
-      // If comment is provided, create it and add to the collection
+      // Handle comment creation asynchronously (don't block dialog close)
       if (formData.comment.trim()) {
-        const nuevoComentario = await createComentario({
+        createComentario({
           contenido: formData.comment,
           idActividad: nuevaActividad.id,
           idUsuario: 1, // Assuming user ID 1
+        }).then(nuevoComentario => {
+          console.log("Comentario creado exitosamente", nuevoComentario);
+          // Note: Comment will be added to collection automatically by backend
+        }).catch(error => {
+          console.error("Error creando comentario:", error);
         });
-        console.log("Comentario creado exitosamente", nuevoComentario);
-
-        // Fetch collections to get the newly created one
-        const updatedColecciones = await coleccionComentariosService.getColeccionComentarios();
-
-        // Find the collection for this activity
-        const coleccion = updatedColecciones.find(col => col.actividad.id === nuevaActividad.id);
-        if (coleccion && nuevoComentario.id) {
-          await addComentariosToColeccion(coleccion.id, [nuevoComentario.id]);
-          console.log("Comentario agregado a la colección exitosamente");
-        }
       }
 
-      // Open document upload dialog
+      // Close activity modal and open document modal immediately
+      setIsModalOpen(false)
       setCreatedActivityId(nuevaActividad.id);
       setCreatedActivity(nuevaActividad);
       setShowDocumentDialog(true);
-
-      setIsModalOpen(false)
       setFormData({
         subject: "",
         descripcion: "",
