@@ -8,28 +8,30 @@ import { useJefaturas } from "@/hooks/useJefaturas"
 import { ComboboxEditable } from "@/components/ui/combobox-editable" // Importa el nuevo componente
 
 interface ActivityCreateProps {
-    formData: {
-        subject: string;
-        descripcion: string;
-        area: string;
-        instanciaEmisora: string;
-        instanciaReceptora: string;
-        dueDate: string;
-        activityType: string;
-        comment: string;
-    };
-    areasWithActivities: any[];
-    handleInputChange: (field: string, value: string) => void;
-    handleSubmit: (e: React.FormEvent) => Promise<void>;
-    setIsModalOpen: (open: boolean) => void;
+   formData: {
+       subject: string;
+       descripcion: string;
+       area: string;
+       instanciaEmisora: string;
+       instanciaReceptora: string;
+       dueDate: string;
+       activityType: string;
+       comment: string;
+   };
+   areasWithActivities: any[];
+   handleInputChange: (field: string, value: string) => void;
+   handleSubmit: (e: React.FormEvent) => Promise<void>;
+   setIsModalOpen: (open: boolean) => void;
+   isSubmitting?: boolean;
 }
 
 export function ActivityCreate({
-    formData,
-    areasWithActivities,
-    handleInputChange,
-    handleSubmit,
-    setIsModalOpen
+   formData,
+   areasWithActivities,
+   handleInputChange,
+   handleSubmit,
+   setIsModalOpen,
+   isSubmitting = false
 }: ActivityCreateProps) {
     const { jefaturas } = useJefaturas();
 
@@ -170,11 +172,11 @@ export function ActivityCreate({
 
                 {/* Botones */}
                 <div className="flex justify-end gap-3 pt-4">
-                    <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                    <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>
                         Cancelar
                     </Button>
-                    <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                        Crear Actividad
+                    <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
+                        {isSubmitting ? "Guardando..." : "Crear Actividad"}
                     </Button>
                 </div>
             </form>

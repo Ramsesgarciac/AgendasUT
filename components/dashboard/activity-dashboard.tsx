@@ -56,6 +56,7 @@ export default function ActivityDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [currentView, setCurrentView] = useState<"dashboard" | "notes" | "calendar">("dashboard")
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     subject: "",
     descripcion: "",
@@ -153,6 +154,7 @@ export default function ActivityDashboard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSubmitting(true)
     try {
       // Save activity data to localStorage as 'createAct'
       const createActData = {
@@ -212,6 +214,7 @@ export default function ActivityDashboard() {
       setCreatedActivityId(nuevaActividad.id);
       setCreatedActivity(nuevaActividad);
       setShowDocumentDialog(true);
+
       setFormData({
         subject: "",
         descripcion: "",
@@ -225,6 +228,8 @@ export default function ActivityDashboard() {
     } catch (error) {
       console.error("Error creando actividad o comentario:", error);
       // TODO: Show error message to user
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -412,6 +417,7 @@ export default function ActivityDashboard() {
                     handleInputChange={handleInputChange}
                     handleSubmit={handleSubmit}
                     setIsModalOpen={setIsModalOpen}
+                    isSubmitting={isSubmitting}
                   />
                 </Dialog>
               </div>
