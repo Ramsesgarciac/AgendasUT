@@ -9,6 +9,7 @@ interface ActivityViewCardProps {
     formatDate: (dateString: string) => string
 }
 
+//restore
 export function ActivityViewCard({ area, formatDate }: ActivityViewCardProps) {
     return (
         <div className="border border-border rounded-lg bg-card">
