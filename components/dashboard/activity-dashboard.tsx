@@ -3,14 +3,20 @@
 import type React from "react"
 
 import { useState, useEffect, useMemo } from "react"
+import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@heroui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Dialog, DialogTrigger } from "@/components/ui/dialog"
 import {Plus,Calendar,FileText,ChevronDown,Menu,} from "lucide-react"
-import { Notes } from "@/app/notes/page"
-import { CalendarComponent } from "@/app/calendar/page"
+const Notes = dynamic(() => import("@/app/notes/page").then(mod => ({ default: mod.Notes })), {
+  loading: () => <div className="flex items-center justify-center h-full">Cargando notas...</div>
+});
+
+const CalendarComponent = dynamic(() => import("@/app/calendar/page").then(mod => ({ default: mod.CalendarComponent })), {
+  loading: () => <div className="flex items-center justify-center h-full">Cargando calendario...</div>
+});
 import { Area } from '@/types/area';
 import { Actividad } from '@/types/actividad';
 import { useAreas } from '@/hooks/useAreas';
@@ -19,12 +25,32 @@ import { useTipoActividades } from '@/hooks/useTipoActividades';
 import { useTipoAreas } from '@/hooks/useTipoAreas';
 import { useComentarios } from '@/hooks/useComentarios';
 import { useColeccionComentarios } from '@/hooks/useColeccionComentarios';
+import { useStatus } from '@/hooks/useStatus';
+import { useUsuarios } from '@/hooks/useUsuarios';
 import { coleccionComentariosService } from '@/lib/services/coleccionComentariosService';
-import { ActivityCreate } from '@/components/cards/activityCreate';
-import { DocumentCreate } from '@/components/cards/documentCreate';
-import { ActivityTable } from '@/components/tables/activityTable';
-import { ActivityViewCard } from '@/components/cards/activityViewCard';
-import { SidebarHeader, SidebarNav } from '@/components/nav/sidebar';
+const ActivityCreate = dynamic(() => import('@/components/cards/activityCreate').then(mod => ({ default: mod.ActivityCreate })), {
+  loading: () => <div className="flex items-center justify-center p-4">Cargando...</div>
+});
+
+const DocumentCreate = dynamic(() => import('@/components/cards/documentCreate').then(mod => ({ default: mod.DocumentCreate })), {
+  loading: () => <div className="flex items-center justify-center p-4">Cargando...</div>
+});
+
+const ActivityTable = dynamic(() => import('@/components/tables/activityTable').then(mod => ({ default: mod.ActivityTable })), {
+  loading: () => <div className="flex items-center justify-center p-4">Cargando tabla...</div>
+});
+
+const ActivityViewCard = dynamic(() => import('@/components/cards/activityViewCard').then(mod => ({ default: mod.ActivityViewCard })), {
+  loading: () => <div className="flex items-center justify-center p-4">Cargando tarjetas...</div>
+});
+
+const SidebarHeader = dynamic(() => import('@/components/nav/sidebar').then(mod => ({ default: mod.SidebarHeader })), {
+  loading: () => <div className="h-16 bg-blue-500"></div>
+});
+
+const SidebarNav = dynamic(() => import('@/components/nav/sidebar').then(mod => ({ default: mod.SidebarNav })), {
+  loading: () => <div className="flex-1 bg-blue-500"></div>
+});
 
 const getColorClasses = (color: Area["color"]) => {
   const colorMap = {
@@ -44,6 +70,8 @@ export default function ActivityDashboard() {
   const { tipoAreas, loading: tipoAreasLoading, error: tipoAreasError } = useTipoAreas();
   const { createComentario } = useComentarios();
   const { coleccionComentarios, refetch, addComentariosToColeccion } = useColeccionComentarios();
+  const { status: statusList } = useStatus();
+  const { usuarios } = useUsuarios();
 
   const loading = areasLoading || actividadesLoading || tipoAreasLoading;
   const error = areasError || actividadesError || tipoAreasError;
@@ -264,14 +292,14 @@ export default function ActivityDashboard() {
           <>
             <div className="hidden md:flex h-full">
               <div className="w-full">
-                <ActivityTable filteredAreas={filteredAreas} formatDate={formatDate} />
+                <ActivityTable filteredAreas={filteredAreas} formatDate={formatDate} statusList={statusList} usuarios={usuarios} />
               </div>
             </div>
 
             <div className="md:hidden overflow-auto">
               <div className="space-y-4">
                 {filteredAreas.map((area) => (
-                  <ActivityViewCard key={area.id} area={area} formatDate={formatDate} />
+                  <ActivityViewCard key={area.id} area={area} formatDate={formatDate} statusList={statusList} usuarios={usuarios} />
                 ))}
               </div>
             </div>
@@ -395,7 +423,7 @@ export default function ActivityDashboard() {
                             onChange={() => handleAreaToggle(area.id)}
                           />
                           <span className="text-sm flex-1">{area.name}</span>
-                          <Badge variant="outline" className={`${getColorClasses(area.color)} text-xs`}>
+                          <Badge variant="flat" className={`${getColorClasses(area.color)} text-xs`}>
                             {area.activities.length}
                           </Badge>
                         </div>

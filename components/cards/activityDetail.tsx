@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -11,15 +12,20 @@ import { useStatus } from "@/hooks/useStatus"
 import { useUsuarios } from "@/hooks/useUsuarios"
 import { useDocumentos } from "@/hooks/useDocumentos"
 import { Documento } from "@/types/documento"
-import { DocumentEdit } from "./documentEdit"
 import { DocumentCreate } from "./documentCreate"
+
+const DocumentEdit = dynamic(() => import('./documentEdit').then(mod => ({ default: mod.DocumentEdit })), {
+  loading: () => <div className="flex items-center justify-center p-4">Cargando...</div>
+})
 
 interface ModalWithTabsProps {
     children: React.ReactNode
     activity: { id: number; subject: string; date: string }
+    statusList?: any[]
+    usuarios?: any[]
 }
 
-export function ModalWithTabs({ children, activity }: ModalWithTabsProps) {
+export function ModalWithTabs({ children, activity, statusList: propStatusList, usuarios: propUsuarios }: ModalWithTabsProps) {
     const [open, setOpen] = useState(false)
     const [fullActivity, setFullActivity] = useState<Actividad | null>(null)
     const [loading, setLoading] = useState(false)
@@ -27,8 +33,10 @@ export function ModalWithTabs({ children, activity }: ModalWithTabsProps) {
     const [selectedDoc, setSelectedDoc] = useState<Documento | null>(null)
     const [isEditMode, setIsEditMode] = useState(false)
     const [isCreateMode, setIsCreateMode] = useState(false)
-    const { status: statusList } = useStatus()
-    const { usuarios } = useUsuarios()
+    const { status: hookStatusList } = propStatusList ? { status: propStatusList } : useStatus()
+    const { usuarios: hookUsuarios } = propUsuarios ? { usuarios: propUsuarios } : useUsuarios()
+    const statusList = propStatusList || hookStatusList
+    const usuarios = propUsuarios || hookUsuarios
     const { getDocumentos, deleteDocumento, downloadDocumento, viewDocumento, loading: documentosLoading } = useDocumentos()
 
     useEffect(() => {

@@ -1,6 +1,5 @@
 import { Documento } from '../../types/documento';
 import BaseService from './baseService';
-import jsPDF from 'jspdf';
 
 class DocumentoService extends BaseService {
   private baseUrl = '/api/documentos';
@@ -76,6 +75,7 @@ class DocumentoService extends BaseService {
 
     // Generar un solo PDF de acuse para todos los documentos
     const acusePromise = (async () => {
+      const { default: jsPDF } = await import('jspdf');
       const docPDF = new jsPDF();
       docPDF.setFontSize(16);
       docPDF.text('Acuse de Recepción de Documentos', 20, 30);

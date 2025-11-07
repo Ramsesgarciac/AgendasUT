@@ -1,15 +1,8 @@
 "use client"
 
 import React from "react"
-import {
-    Table,
-    TableHeader,
-    TableColumn,
-    TableBody,
-    TableRow,
-    TableCell,
-    Spinner,
-} from "@heroui/react"
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table"
+import { Spinner } from "@heroui/spinner"
 import { useInfiniteScroll } from "@heroui/use-infinite-scroll"
 import { Badge } from "@/components/ui/badge"
 import { FileText, Calendar } from "lucide-react"
@@ -19,9 +12,11 @@ import { ModalWithTabs } from "@/components/cards/activityDetail"
 interface ActivityTableProps {
     filteredAreas: Area[]
     formatDate: (dateString: string) => string
+    statusList?: any[]
+    usuarios?: any[]
 }
 
-export function ActivityTable({ filteredAreas, formatDate }: ActivityTableProps) {
+export function ActivityTable({ filteredAreas, formatDate, statusList, usuarios }: ActivityTableProps) {
     const [displayedActivities, setDisplayedActivities] = React.useState<Record<number, Activity[]>>({})
     const [hasMore, setHasMore] = React.useState(false)
     const [isLoading, setIsLoading] = React.useState(true)
@@ -130,7 +125,7 @@ export function ActivityTable({ filteredAreas, formatDate }: ActivityTableProps)
                             return (
                                 <TableCell key={area.id}>
                                     {activity ? (
-                                        <ModalWithTabs activity={{ id: parseInt(activity.id), subject: activity.subject, date: activity.date }}>
+                                        <ModalWithTabs activity={{ id: parseInt(activity.id), subject: activity.subject, date: activity.date }} statusList={statusList} usuarios={usuarios}>
                                             <div className="p-3 rounded-lg bg-default-50 border border-default-200 hover:bg-default-100 transition-all duration-200 cursor-pointer shadow-sm">
                                                 <h4 className="font-medium text-sm text-foreground mb-2 line-clamp-2">
                                                     {activity.subject.slice(0, 24)}{activity.subject.length > 24 ? '...' : ''}
