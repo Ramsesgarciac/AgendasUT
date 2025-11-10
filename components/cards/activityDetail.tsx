@@ -1,11 +1,11 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import dynamic from "next/dynamic"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Calendar, Building2, User, Clock, FileText, AlertCircle, Download, Edit2, Trash2, FileIcon, Eye, Plus } from "lucide-react"
+import { Calendar, Building2, User, Clock, FileText, AlertCircle, Edit2, Trash2, FileIcon, Eye, Plus } from "lucide-react"
 import { getActividadById } from "@/lib/services/actividadService"
 import { Actividad } from "@/types/actividad"
 import { useStatus } from "@/hooks/useStatus"
@@ -15,7 +15,8 @@ import { Documento } from "@/types/documento"
 import { DocumentCreate } from "./documentCreate"
 
 const DocumentEdit = dynamic(() => import('./documentEdit').then(mod => ({ default: mod.DocumentEdit })), {
-  loading: () => <div className="flex items-center justify-center p-4">Cargando...</div>
+  loading: () => <div className="flex items-center justify-center p-4">Cargando...</div>,
+  ssr: false
 })
 
 interface ModalWithTabsProps {
@@ -33,35 +34,76 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
     const [selectedDoc, setSelectedDoc] = useState<Documento | null>(null)
     const [isEditMode, setIsEditMode] = useState(false)
     const [isCreateMode, setIsCreateMode] = useState(false)
+    const [activeTab, setActiveTab] = useState("apartado1")
+    
     const { status: hookStatusList } = propStatusList ? { status: propStatusList } : useStatus()
     const { usuarios: hookUsuarios } = propUsuarios ? { usuarios: propUsuarios } : useUsuarios()
     const statusList = propStatusList || hookStatusList
     const usuarios = propUsuarios || hookUsuarios
-    const { getDocumentos, deleteDocumento, downloadDocumento, viewDocumento, loading: documentosLoading } = useDocumentos()
+    const { getDocumentos, deleteDocumento, viewDocumento, loading: documentosLoading } = useDocumentos()
 
+    // Cargar datos solo cuando el modal se abre
     useEffect(() => {
-        if (open && activity.id) {
+        if (!open) return;
+
+        let isMounted = true;
+
+        const loadActivityData = async () => {
             setLoading(true)
             
-            // Cargar actividad
-            getActividadById(activity.id)
-                .then(actividadData => {
+            try {
+                const actividadData = await getActividadById(activity.id)
+                if (isMounted) {
                     setFullActivity(actividadData)
-                })
-                .catch(error => {
-                    console.error('Error loading activity details:', error)
+                }
+            } catch (error) {
+                console.error('Error loading activity details:', error)
+                if (isMounted) {
                     setFullActivity(null)
-                })
-                .finally(() => {
+                }
+            } finally {
+                if (isMounted) {
                     setLoading(false)
-                })
+                }
+            }
+        }
 
-            // Cargar documentos en paralelo pero sin afectar el loading de la actividad
-            loadDocumentos()
+        loadActivityData()
+
+        return () => {
+            isMounted = false;
         }
     }, [open, activity.id])
 
-    const loadDocumentos = async () => {
+    // Cargar documentos solo cuando se cambia a la pestaña de documentación
+    useEffect(() => {
+        if (!open || activeTab !== "apartado2") return;
+
+        let isMounted = true;
+
+        const loadDocumentos = async () => {
+            try {
+                const docs = await getDocumentos()
+                if (isMounted) {
+                    const filteredDocs = docs.filter(doc => doc.actividad?.id === activity.id)
+                    setDocumentos(filteredDocs)
+                }
+            } catch (error) {
+                console.error('Error loading documents:', error)
+                if (isMounted) {
+                    setDocumentos([])
+                }
+            }
+        }
+
+        loadDocumentos()
+
+        return () => {
+            isMounted = false;
+        }
+    }, [open, activeTab, activity.id])
+
+    const loadDocumentos = useCallback(async () => {
         try {
             const docs = await getDocumentos()
             const filteredDocs = docs.filter(doc => doc.actividad?.id === activity.id)
@@ -70,9 +112,9 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
             console.error('Error loading documents:', error)
             setDocumentos([])
         }
-    }
+    }, [activity.id, getDocumentos])
 
-    const handleDeleteDocumento = async (docId: number) => {
+    const handleDeleteDocumento = useCallback(async (docId: number) => {
         if (!confirm('¿Estás seguro de que deseas eliminar este documento?')) return
         
         try {
@@ -82,39 +124,25 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
             console.error('Error deleting document:', error)
             alert('Error al eliminar el documento')
         }
-    }
+    }, [deleteDocumento])
 
-    const handleViewDocumento = async (doc: Documento) => {
+    const handleViewDocumento = useCallback(async (doc: Documento) => {
         try {
-            // Obtener la URL del documento para visualizar
             const url = await viewDocumento(doc.id)
-
-            // Abrir en una nueva pestaña
             window.open(url, '_blank')
-
-            // Limpiar la URL del blob después de un tiempo para liberar memoria
             setTimeout(() => URL.revokeObjectURL(url), 10000)
         } catch (error) {
             console.error('Error al abrir el documento:', error)
             alert('Error al abrir el documento. Inténtalo de nuevo.')
         }
-    }
+    }, [viewDocumento])
 
-    const handleEditDocumento = (doc: Documento) => {
+    const handleEditDocumento = useCallback((doc: Documento) => {
         setSelectedDoc(doc)
         setIsEditMode(true)
-    }
+    }, [])
 
-    const getFileIcon = (tipoDoc: string) => {
-        const tipo = tipoDoc.toLowerCase()
-        if (tipo.includes('pdf')) return '📄'
-        if (tipo.includes('doc')) return '📝'
-        if (tipo.includes('xls') || tipo.includes('excel')) return '📊'
-        if (tipo.includes('img') || tipo.includes('image') || tipo.includes('png') || tipo.includes('jpg')) return '🖼️'
-        return '📎'
-    } // Removí getDocumentos de las dependencias
-
-    const InfoCard = ({ icon: Icon, label, value }: { icon: any, label: string, value: string | number }) => (
+    const InfoCard = useCallback(({ icon: Icon, label, value }: { icon: any, label: string, value: string | number }) => (
         <div className="flex items-start gap-3 p-3 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 hover:shadow-md transition-shadow">
             <div className="mt-0.5 p-2 rounded-full bg-blue-500 text-white">
                 <Icon className="w-4 h-4" />
@@ -124,7 +152,71 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                 <p className="text-sm font-semibold text-gray-900 break-words">{String(value)}</p>
             </div>
         </div>
-    )
+    ), [])
+
+    // Separar documentos regulares y acuses
+    const { regularDocs, acuseDocs } = useMemo(() => {
+        const regular = documentos.filter(doc => doc.tipoDoc !== 'Acuse');
+        const acuse = documentos.filter(doc => doc.tipoDoc === 'Acuse');
+        return { regularDocs: regular, acuseDocs: acuse };
+    }, [documentos]);
+
+    const renderDocumentItem = useCallback((doc: Documento, isAcuse: boolean = false) => (
+        <div
+            key={doc.id}
+            className={`rounded-lg border hover:shadow-md transition-all duration-200 p-4 ${
+                isAcuse ? 'bg-green-50 border-green-200 hover:border-green-300' : 'bg-white border-gray-200 hover:border-indigo-300'
+            }`}
+        >
+            <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-900 text-sm truncate">
+                            {doc.nombre}
+                        </h4>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-1 ${
+                            isAcuse ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-indigo-700'
+                        }`}>
+                            {doc.tipoDoc}
+                        </span>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewDocumento(doc)}
+                        className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors"
+                    >
+                        <Eye className="w-4 h-4 mr-1.5" />
+                        Ver
+                    </Button>
+                    {!isAcuse && (
+                        <>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditDocumento(doc)}
+                                className="hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300 transition-colors"
+                            >
+                                <Edit2 className="w-4 h-4 mr-1.5" />
+                                Editar
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteDocumento(doc.id)}
+                                className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    ), [handleViewDocumento, handleEditDocumento, handleDeleteDocumento])
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -138,7 +230,7 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                     </DialogTitle>
                 </DialogHeader>
                 
-                <Tabs defaultValue="apartado1" className="w-full flex-1 flex flex-col overflow-hidden">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col overflow-hidden">
                     <TabsList className="grid w-full grid-cols-2 bg-transparent rounded-lg p-1 mb-4">
                         <TabsTrigger
                             value="apartado1"
@@ -163,7 +255,6 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                                 </div>
                             ) : fullActivity ? (
                                 <>
-                                    {/* Descripción destacada */}
                                     <div className="bg-gradient-to-r from-blue-600 to-indigo-800 rounded-xl p-6 text-white shadow-lg">
                                         <div className="flex items-center gap-2 mb-3">
                                             <FileText className="w-5 h-5" />
@@ -174,7 +265,6 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                                         </p>
                                     </div>
 
-                                    {/* Grid de información */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <InfoCard
                                             icon={Building2}
@@ -198,7 +288,6 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                                         />
                                     </div>
 
-                                    {/* Fechas y estado */}
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div className="p-4 rounded-lg bg-amber-50 border border-amber-200">
                                             <div className="flex items-center gap-2 mb-2">
@@ -254,11 +343,9 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                                 onClose={() => {
                                     setIsEditMode(false)
                                     setSelectedDoc(null)
-                                    loadDocumentos() // Recargar documentos después de editar
+                                    loadDocumentos()
                                 }}
-                                onSuccess={() => {
-                                    loadDocumentos() // Recargar documentos después de guardar
-                                }}
+                                onSuccess={loadDocumentos}
                             />
                             <DocumentCreate
                                 activityId={activity.id}
@@ -266,7 +353,7 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                                 isOpen={isCreateMode}
                                 onClose={() => {
                                     setIsCreateMode(false)
-                                    loadDocumentos() // Recargar documentos después de crear
+                                    loadDocumentos()
                                 }}
                             />
                             {documentosLoading ? (
@@ -276,122 +363,28 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                                 </div>
                             ) : documentos.length > 0 ? (
                                 <div className="space-y-6">
-                                    {/* Documentos Regulares */}
-                                    {(() => {
-                                        const regularDocs = documentos.filter(doc => doc.tipoDoc !== 'Acuse');
-                                        const acuseDocs = documentos.filter(doc => doc.tipoDoc === 'Acuse');
+                                    {regularDocs.length > 0 && (
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-lg font-semibold text-gray-800">Documentos</h4>
+                                                <Button
+                                                    onClick={() => setIsCreateMode(true)}
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                >
+                                                    <Plus className="w-4 h-4 mr-2" />
+                                                    Agregar Documento
+                                                </Button>
+                                            </div>
+                                            {regularDocs.map(doc => renderDocumentItem(doc, false))}
+                                        </div>
+                                    )}
 
-                                        return (
-                                            <>
-                                                {regularDocs.length > 0 && (
-                                                    <div className="space-y-3">
-                                                        <div className="flex items-center justify-between">
-                                                            <h4 className="text-lg font-semibold text-gray-800">Documentos</h4>
-                                                            <Button
-                                                                onClick={() => setIsCreateMode(true)}
-                                                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                                                            >
-                                                                <Plus className="w-4 h-4 mr-2" />
-                                                                Agregar Documento
-                                                            </Button>
-                                                        </div>
-                                                        {regularDocs.map(doc => (
-                                                            <div
-                                                                key={doc.id}
-                                                                className="bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200 p-4"
-                                                            >
-                                                                <div className="flex items-center justify-between gap-4">
-                                                                    {/* Icon and Info */}
-                                                                    <div className="flex items-center gap-4 flex-1 min-w-0">
-
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <h4 className="font-semibold text-gray-900 text-sm truncate">
-                                                                                {doc.nombre}
-                                                                            </h4>
-                                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700 mt-1">
-                                                                                {doc.tipoDoc}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    {/* Action Buttons */}
-                                                                    <div className="flex items-center gap-2 flex-shrink-0">
-                                                                        <Button
-                                                                            variant="outline"
-                                                                            size="sm"
-                                                                            onClick={() => handleViewDocumento(doc)}
-                                                                            className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors"
-                                                                        >
-                                                                            <Eye className="w-4 h-4 mr-1.5" />
-                                                                            Ver
-                                                                        </Button>
-                                                                        <Button
-                                                                            variant="outline"
-                                                                            size="sm"
-                                                                            onClick={() => handleEditDocumento(doc)}
-                                                                            className="hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300 transition-colors"
-                                                                        >
-                                                                            <Edit2 className="w-4 h-4 mr-1.5" />
-                                                                            Editar
-                                                                        </Button>
-                                                                        <Button
-                                                                            variant="outline"
-                                                                            size="sm"
-                                                                            onClick={() => handleDeleteDocumento(doc.id)}
-                                                                            className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
-                                                                        >
-                                                                            <Trash2 className="w-4 h-4" />
-                                                                        </Button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-
-                                                {/* Acuses */}
-                                                {acuseDocs.length > 0 && (
-                                                    <div className="space-y-3">
-                                                        <h4 className="text-lg font-semibold text-gray-800">Acuses de Recepción</h4>
-                                                        {acuseDocs.map(doc => (
-                                                            <div
-                                                                key={doc.id}
-                                                                className="bg-green-50 rounded-lg border border-green-200 hover:border-green-300 hover:shadow-md transition-all duration-200 p-4"
-                                                            >
-                                                                <div className="flex items-center justify-between gap-4">
-                                                                    {/* Icon and Info */}
-                                                                    <div className="flex items-center gap-4 flex-1 min-w-0">
-
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <h4 className="font-semibold text-gray-900 text-sm truncate">
-                                                                                {doc.nombre}
-                                                                            </h4>
-                                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 mt-1">
-                                                                                {doc.tipoDoc}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    {/* Action Buttons - Solo Ver para acuses */}
-                                                                    <div className="flex items-center gap-2 flex-shrink-0">
-                                                                        <Button
-                                                                            variant="outline"
-                                                                            size="sm"
-                                                                            onClick={() => handleViewDocumento(doc)}
-                                                                            className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors"
-                                                                        >
-                                                                            <Eye className="w-4 h-4 mr-1.5" />
-                                                                            Ver
-                                                                        </Button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </>
-                                        );
-                                    })()}
+                                    {acuseDocs.length > 0 && (
+                                        <div className="space-y-3">
+                                            <h4 className="text-lg font-semibold text-gray-800">Acuses de Recepción</h4>
+                                            {acuseDocs.map(doc => renderDocumentItem(doc, true))}
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-16 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
@@ -399,18 +392,16 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                                         <FileIcon className="w-12 h-12 text-gray-400" />
                                     </div>
                                     <h3 className="text-lg font-semibold text-gray-700 mb-2">No hay documentos adjuntos</h3>
-                                    <p className="text-sm text-gray-500">
+                                    <p className="text-sm text-gray-500 mb-4">
                                         Aún no se han subido documentos para esta actividad
                                     </p>
-                                    <div className="flex items-center justify-between p-4">
-                                                            <Button
-                                                                onClick={() => setIsCreateMode(true)}
-                                                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                                                            >
-                                                                <Plus className="w-4 h-4 mr-2" />
-                                                                Agregar Documento
-                                                            </Button>
-                                                        </div>
+                                    <Button
+                                        onClick={() => setIsCreateMode(true)}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Agregar Documento
+                                    </Button>
                                 </div>
                             )}
                         </TabsContent>
