@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { FileText, Calendar } from "lucide-react"
 import { Area, Activity } from "@/types/area"
 import { ModalWithTabs } from "@/components/cards/activityDetail"
-//se necesita el props para rrealizar que la card de createactividades tenga en cuenta la la lista de areas
+
 interface ActivityTableProps {
     filteredAreas: Area[]
     formatDate: (dateString: string) => string
@@ -22,6 +22,19 @@ export function ActivityTable({ filteredAreas, formatDate, statusList, usuarios 
     const [isLoading, setIsLoading] = React.useState(true)
     const INITIAL_ITEMS = 8
     const ITEMS_PER_LOAD = 3
+
+    const getStatusColor = (statusName: string): string => {
+        switch (statusName) {
+            case "En Proceso":
+                return "bg-amber-200 text-amber-700 border-amber-300"
+            case "Dezfasada":
+                return "bg-rose-400 text-rose-950 border-rose-500"
+            case "Terminada":
+                return "bg-emerald-400 text-emerald-950 border-emerald-600"
+            default:
+                return "bg-slate-400 text-slate-950 border-slate-500"
+        }
+    }
 
     // Initialize displayed activities
     React.useEffect(() => {
@@ -125,16 +138,25 @@ export function ActivityTable({ filteredAreas, formatDate, statusList, usuarios 
                             return (
                                 <TableCell key={area.id}>
                                     {activity ? (
-                                        <ModalWithTabs activity={{ id: parseInt(activity.id), subject: activity.subject, date: activity.date }} statusList={statusList} usuarios={usuarios}>
-                                            <div className="p-3 rounded-lg bg-default-50 border border-default-200 hover:bg-default-100 transition-all duration-200 cursor-pointer shadow-sm">
-                                                <h4 className="font-medium text-sm text-foreground mb-2 line-clamp-2">
-                                                    {activity.subject.slice(0, 24)}{activity.subject.length > 24 ? '...' : ''}
+                                        <ModalWithTabs activity={{ id: parseInt(activity.id), subject: activity.subject, date: activity.date}} statusList={statusList} usuarios={usuarios}>
+                                            <div className="group p-4 rounded-xl bg-white border-2 border-gray-300 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-100/50 transition-all duration-300 cursor-pointer">
+                                                {/* Título de la actividad */}
+                                                <h4 className="font-semibold text-sm text-gray-800 mb-4 line-clamp-2 leading-snug min-h-[2.5rem] group-hover:text-blue-600 transition-colors">
+                                                    {activity.subject.slice(0,35)}{activity.subject.length > 35 ? '...' : ''}
                                                 </h4>
-                                                <div className="flex items-center text-xs text-default-500">
-                                                    <Calendar className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" />
-                                                    <span className="truncate">
-                                                        {formatDate(activity.date)}
-                                                    </span>
+                                                
+                                                {/* Fecha y Estado en la misma línea */}
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex items-center text-xs text-gray-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+                                                        <Calendar className="w-3.5 h-3.5 mr-1.5 flex-shrink-0 text-blue-500" />
+                                                        <span className="font-medium">
+                                                            {formatDate(activity.date)}
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    <Badge className={`text-xs font-semibold px-3 py-1.5 rounded-lg border-2 shadow-sm ${getStatusColor(activity.status.nombre)}`}>
+                                                        {activity.status.nombre}
+                                                    </Badge>
                                                 </div>
                                             </div>
                                         </ModalWithTabs>

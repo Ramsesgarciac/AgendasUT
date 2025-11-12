@@ -1,22 +1,56 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@heroui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Dialog, DialogTrigger } from "@/components/ui/dialog"
-import {Plus,Calendar,FileText,ChevronDown,Menu,} from "lucide-react"
+import { Plus, ChevronDown, Menu, FileText } from "lucide-react"
+
+// Dynamic imports con suspense
 const Notes = dynamic(() => import("@/app/notes/page").then(mod => ({ default: mod.Notes })), {
-  loading: () => <div className="flex items-center justify-center h-full">Cargando notas...</div>
+  loading: () => <div className="flex items-center justify-center h-full">Cargando notas...</div>,
+  ssr: false
 });
 
 const CalendarComponent = dynamic(() => import("@/app/calendar/page").then(mod => ({ default: mod.CalendarComponent })), {
-  loading: () => <div className="flex items-center justify-center h-full">Cargando calendario...</div>
+  loading: () => <div className="flex items-center justify-center h-full">Cargando calendario...</div>,
+  ssr: false
 });
+
+const ActivityCreate = dynamic(() => import('@/components/cards/activityCreate').then(mod => ({ default: mod.ActivityCreate })), {
+  loading: () => <div className="flex items-center justify-center p-4">Cargando...</div>,
+  ssr: false
+});
+
+const DocumentCreate = dynamic(() => import('@/components/cards/documentCreate').then(mod => ({ default: mod.DocumentCreate })), {
+  loading: () => <div className="flex items-center justify-center p-4">Cargando...</div>,
+  ssr: false
+});
+
+const ActivityTable = dynamic(() => import('@/components/tables/activityTable').then(mod => ({ default: mod.ActivityTable })), {
+  loading: () => <div className="flex items-center justify-center p-4">Cargando tabla...</div>,
+  ssr: false
+});
+
+const ActivityViewCard = dynamic(() => import('@/components/cards/activityViewCard').then(mod => ({ default: mod.ActivityViewCard })), {
+  loading: () => <div className="flex items-center justify-center p-4">Cargando tarjetas...</div>,
+  ssr: false
+});
+
+const SidebarHeader = dynamic(() => import('@/components/nav/sidebar').then(mod => ({ default: mod.SidebarHeader })), {
+  loading: () => <div className="h-16 bg-blue-500"></div>,
+  ssr: false
+});
+
+const SidebarNav = dynamic(() => import('@/components/nav/sidebar').then(mod => ({ default: mod.SidebarNav })), {
+  loading: () => <div className="flex-1 bg-blue-500"></div>,
+  ssr: false
+});
+
 import { Area } from '@/types/area';
 import { Actividad } from '@/types/actividad';
 import { useAreas } from '@/hooks/useAreas';
@@ -27,30 +61,6 @@ import { useComentarios } from '@/hooks/useComentarios';
 import { useColeccionComentarios } from '@/hooks/useColeccionComentarios';
 import { useStatus } from '@/hooks/useStatus';
 import { useUsuarios } from '@/hooks/useUsuarios';
-import { coleccionComentariosService } from '@/lib/services/coleccionComentariosService';
-const ActivityCreate = dynamic(() => import('@/components/cards/activityCreate').then(mod => ({ default: mod.ActivityCreate })), {
-  loading: () => <div className="flex items-center justify-center p-4">Cargando...</div>
-});
-
-const DocumentCreate = dynamic(() => import('@/components/cards/documentCreate').then(mod => ({ default: mod.DocumentCreate })), {
-  loading: () => <div className="flex items-center justify-center p-4">Cargando...</div>
-});
-
-const ActivityTable = dynamic(() => import('@/components/tables/activityTable').then(mod => ({ default: mod.ActivityTable })), {
-  loading: () => <div className="flex items-center justify-center p-4">Cargando tabla...</div>
-});
-
-const ActivityViewCard = dynamic(() => import('@/components/cards/activityViewCard').then(mod => ({ default: mod.ActivityViewCard })), {
-  loading: () => <div className="flex items-center justify-center p-4">Cargando tarjetas...</div>
-});
-
-const SidebarHeader = dynamic(() => import('@/components/nav/sidebar').then(mod => ({ default: mod.SidebarHeader })), {
-  loading: () => <div className="h-16 bg-blue-500"></div>
-});
-
-const SidebarNav = dynamic(() => import('@/components/nav/sidebar').then(mod => ({ default: mod.SidebarNav })), {
-  loading: () => <div className="flex-1 bg-blue-500"></div>
-});
 
 const getColorClasses = (color: Area["color"]) => {
   const colorMap = {
@@ -64,17 +74,19 @@ const getColorClasses = (color: Area["color"]) => {
 }
 
 export default function ActivityDashboard() {
+  // Hooks - cargar solo una vez
   const { areas, loading: areasLoading, error: areasError } = useAreas();
   const { actividades, loading: actividadesLoading, error: actividadesError, createActividad } = useActividades();
   const { tipoActividades } = useTipoActividades();
   const { tipoAreas, loading: tipoAreasLoading, error: tipoAreasError } = useTipoAreas();
   const { createComentario } = useComentarios();
-  const { coleccionComentarios, refetch, addComentariosToColeccion } = useColeccionComentarios();
   const { status: statusList } = useStatus();
   const { usuarios } = useUsuarios();
 
   const loading = areasLoading || actividadesLoading || tipoAreasLoading;
   const error = areasError || actividadesError || tipoAreasError;
+
+  // Estados
   const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([])
   const [selectedTipoAreaId, setSelectedTipoAreaId] = useState<number | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -96,7 +108,7 @@ export default function ActivityDashboard() {
     comment: "",
   })
 
-  // Cerrar sidebar en móvil al cambiar tamaño de pantalla
+  // Responsive sidebar
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
@@ -108,65 +120,85 @@ export default function ActivityDashboard() {
 
     handleResize()
     window.addEventListener("resize", handleResize)
-
     return () => window.removeEventListener("resize", handleResize)
   }, [])
 
-  // Initialize selectedAreaIds when areas load
+  // Initialize selectedAreaIds - solo cuando areas cambia
   useEffect(() => {
-    if (areas.length > 0) {
+    if (areas.length > 0 && selectedAreaIds.length === 0) {
       setSelectedAreaIds(areas.map((area) => area.id));
     }
-  }, [areas]);
+  }, [areas.length]); // Dependencia optimizada
 
-  // Initialize selectedTipoAreaId when tipoAreas load
+  // Initialize selectedTipoAreaId
   useEffect(() => {
     if (tipoAreas.length > 0 && selectedTipoAreaId === null) {
       setSelectedTipoAreaId(tipoAreas[0].id);
     }
-  }, [tipoAreas, selectedTipoAreaId]);
+  }, [tipoAreas.length]); // Dependencia optimizada
 
-  const areasWithActivities = useMemo(() => areas.map(area => ({ ...area, activities: actividades.filter(act => act.area.id === area.id).map(act => ({ ...act, id: act.id.toString(), subject: act.asunto, date: act.fechaLimite.toString() })) })), [areas, actividades]);
+  // Memoización pesada - solo recalcular cuando cambian areas o actividades
+  const areasWithActivities = useMemo(() => {
+    if (!areas.length || !actividades.length) return areas;
+    
+    return areas.map(area => ({
+      ...area,
+      activities: actividades
+        .filter(act => act.area.id === area.id)
+        .map(act => ({
+          ...act,
+          id: act.id.toString(),
+          subject: act.asunto,
+          date: act.fechaLimite.toString()
+        }))
+    }));
+  }, [areas, actividades]);
 
   const filteredAreasByTipo = useMemo(() => {
     if (selectedTipoAreaId === null) return areasWithActivities;
-    return areasWithActivities.filter((area) => area.tipoArea && area.tipoArea.id === selectedTipoAreaId);
+    return areasWithActivities.filter((area) => area.tipoArea?.id === selectedTipoAreaId);
   }, [areasWithActivities, selectedTipoAreaId]);
 
-  const filteredAreas = selectedAreaIds.length === 0 ? [] : filteredAreasByTipo.filter((area) => selectedAreaIds.includes(area.id))
+  const filteredAreas = useMemo(() => {
+    if (selectedAreaIds.length === 0) return [];
+    return filteredAreasByTipo.filter((area) => selectedAreaIds.includes(area.id));
+  }, [filteredAreasByTipo, selectedAreaIds]);
 
-  const formatDate = (dateString: string) => {
+  // Funciones memoizadas
+  const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString("es-ES", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
     })
-  }
+  }, []);
 
-  const handleAreaToggle = (areaId: number) => {
-    setSelectedAreaIds((prev) => (prev.includes(areaId) ? prev.filter((id) => id !== areaId) : [...prev, areaId]))
-  }
+  const handleAreaToggle = useCallback((areaId: number) => {
+    setSelectedAreaIds((prev) => 
+      prev.includes(areaId) ? prev.filter((id) => id !== areaId) : [...prev, areaId]
+    )
+  }, []);
 
-  const handleSelectAll = () => {
+  const handleSelectAll = useCallback(() => {
     setSelectedAreaIds(filteredAreasByTipo.map((area) => area.id))
-  }
+  }, [filteredAreasByTipo]);
 
-  const handleClearAll = () => {
+  const handleClearAll = useCallback(() => {
     setSelectedAreaIds([])
-  }
+  }, []);
 
-  const handleTipoAreaSelect = (tipoAreaId: number) => {
+  const handleTipoAreaSelect = useCallback((tipoAreaId: number) => {
     setSelectedTipoAreaId(tipoAreaId)
-  }
+  }, []);
 
-  const getSelectedTipoAreasText = () => {
+  const getSelectedTipoAreasText = useCallback(() => {
     if (selectedTipoAreaId === null) return "Ningún tipo de área seleccionada"
     const tipoArea = tipoAreas.find((ta) => ta.id === selectedTipoAreaId)
     return tipoArea?.nombre || ""
-  }
+  }, [selectedTipoAreaId, tipoAreas]);
 
-  const getSelectedAreasText = () => {
+  const getSelectedAreasText = useCallback(() => {
     if (selectedAreaIds.length === 0) return "Ningún área seleccionada"
     if (selectedAreaIds.length === areasWithActivities.length) return "Todas las áreas"
     if (selectedAreaIds.length === 1) {
@@ -174,34 +206,17 @@ export default function ActivityDashboard() {
       return area?.name || ""
     }
     return `${selectedAreaIds.length} áreas seleccionadas`
-  }
+  }, [selectedAreaIds, areasWithActivities]);
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = useCallback((field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    
     try {
-      // Save activity data to localStorage as 'createAct'
-      const createActData = {
-        asunto: formData.subject,
-        area: formData.area,
-        instanciaReceptora: formData.instanciaReceptora,
-        instanciaEmisora: formData.instanciaEmisora,
-        fechaLimite: formData.dueDate,
-        tipoActividad: formData.activityType,
-      };
-      localStorage.setItem('createAct', JSON.stringify(createActData));
-
-      // Save comment data to localStorage as 'createCom'
-      const createComData = {
-        comment: formData.comment,
-      };
-      localStorage.setItem('createCom', JSON.stringify(createComData));
-
-      // Create the activity
       const payload: any = {
         asunto: formData.subject,
         descripcion: formData.descripcion,
@@ -210,39 +225,35 @@ export default function ActivityDashboard() {
         tipoActividad: formData.activityType,
         fechaLimite: formData.dueDate,
         idArea: parseInt(formData.area),
-        idUserCreate: 1, // Assuming user ID 1
+        idUserCreate: 1,
         statusId: 1,
         crearColeccionComentarios: true,
       };
+      
       const nuevaActividad = await createActividad(payload);
-      console.log("Actividad creada exitosamente", nuevaActividad);
 
-      // Enrich with area details
+      // Enriquecer con área
       const areaSeleccionada = areas.find(a => a.id === parseInt(formData.area));
       if (areaSeleccionada) {
         nuevaActividad.area = areaSeleccionada;
       }
 
-      // Handle comment creation asynchronously (don't block dialog close)
+      // Manejar comentario asincrónicamente
       if (formData.comment.trim()) {
         createComentario({
           contenido: formData.comment,
           idActividad: nuevaActividad.id,
-          idUsuario: 1, // Assuming user ID 1
-        }).then(nuevoComentario => {
-          console.log("Comentario creado exitosamente", nuevoComentario);
-          // Note: Comment will be added to collection automatically by backend
-        }).catch(error => {
-          console.error("Error creando comentario:", error);
-        });
+          idUsuario: 1,
+        }).catch(err => console.error("Error creando comentario:", err));
       }
 
-      // Close activity modal and open document modal immediately
+      // Cerrar modal y abrir diálogo de documento
       setIsModalOpen(false)
       setCreatedActivityId(nuevaActividad.id);
       setCreatedActivity(nuevaActividad);
       setShowDocumentDialog(true);
 
+      // Resetear form
       setFormData({
         subject: "",
         descripcion: "",
@@ -254,69 +265,70 @@ export default function ActivityDashboard() {
         comment: "",
       })
     } catch (error) {
-      console.error("Error creando actividad o comentario:", error);
-      // TODO: Show error message to user
+      console.error("Error creando actividad:", error);
     } finally {
       setIsSubmitting(false)
     }
-  }
+  }, [formData, createActividad, areas, createComentario]);
 
-  const renderDashboardContent = () => {
-    if (currentView === "notes") {
-      return <Notes />
-    }
-
-    if (currentView === "calendar") {
-      return <CalendarComponent />
-    }
+  const renderDashboardContent = useCallback(() => {
+    if (currentView === "notes") return <Notes />
+    if (currentView === "calendar") return <CalendarComponent />
 
     if (loading) {
-      return <div className="h-full flex items-center justify-center">Loading areas...</div>;
+      return <div className="h-full flex items-center justify-center">Cargando áreas...</div>;
     }
 
     if (error) {
-      return <div className="h-full flex items-center justify-center">Error loading areas: {error}</div>;
+      return <div className="h-full flex items-center justify-center">Error: {error}</div>;
+    }
+
+    if (selectedAreaIds.length === 0) {
+      return (
+        <div className="h-full flex items-center justify-center">
+          <div className="text-center text-muted-foreground">
+            <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-medium mb-2">No hay áreas seleccionadas</h3>
+            <p className="text-sm">Selecciona al menos un área para ver las actividades</p>
+          </div>
+        </div>
+      );
     }
 
     return (
       <>
-        {selectedAreaIds.length === 0 ? (
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center text-muted-foreground">
-              <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-medium mb-2">No hay áreas seleccionadas</h3>
-              <p className="text-sm">Selecciona al menos un área para ver las actividades</p>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="hidden md:flex h-full">
-              <div className="w-full">
-                <ActivityTable filteredAreas={filteredAreas} formatDate={formatDate} statusList={statusList} usuarios={usuarios} />
-              </div>
-            </div>
+        <div className="hidden md:flex h-full">
+          <ActivityTable 
+            filteredAreas={filteredAreas} 
+            formatDate={formatDate} 
+            statusList={statusList} 
+            usuarios={usuarios} 
+          />
+        </div>
 
-            <div className="md:hidden overflow-auto">
-              <div className="space-y-4">
-                {filteredAreas.map((area) => (
-                  <ActivityViewCard key={area.id} area={area} formatDate={formatDate} statusList={statusList} usuarios={usuarios} />
-                ))}
-              </div>
-            </div>
-          </>
-        )}
+        <div className="md:hidden overflow-auto">
+          <div className="space-y-4">
+            {filteredAreas.map((area) => (
+              <ActivityViewCard 
+                key={area.id} 
+                area={area} 
+                formatDate={formatDate}
+                usuarios={usuarios}
+                actividades={actividades}
+              />
+            ))}
+          </div>
+        </div>
       </>
-    )
-  }
+    );
+  }, [currentView, loading, error, selectedAreaIds, filteredAreas, formatDate, statusList, usuarios]);
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
       )}
 
-      {/* Sidebar */}
       <div
         className={`
           fixed lg:relative inset-y-0 left-0 z-50 w-64 bg-[#1F355E] text-white transform transition-all duration-300 ease-in-out
@@ -326,13 +338,11 @@ export default function ActivityDashboard() {
         `}
       >
         <div className="flex flex-col h-full">
-          {/* Sidebar Header */}
           <SidebarHeader
             isSidebarCollapsed={isSidebarCollapsed}
             setIsSidebarCollapsed={setIsSidebarCollapsed}
             setIsSidebarOpen={setIsSidebarOpen}
           />
-
           <SidebarNav
             currentView={currentView}
             setCurrentView={setCurrentView}
@@ -341,12 +351,10 @@ export default function ActivityDashboard() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 pl-2 overflow-hidden">
         <div className="pl-0 pr-2 pt-2 pb-2 md:pl-1 md:pr-4 md:pt-4 md:pb-4 lg:pl-2 lg:pr-6 lg:pt-6 lg:pb-6 border-b border-border">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-4">
-              {/* Mobile Menu Button */}
               <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setIsSidebarOpen(true)}>
                 <Menu className="w-5 h-5" />
               </Button>
@@ -354,7 +362,6 @@ export default function ActivityDashboard() {
               <div>
                 <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground mb-2">
                   {currentView === "dashboard" && "Tablero de Actividades"}
-                  
                 </h1>
                 <p className="text-sm md:text-base text-muted-foreground">
                   {currentView === "dashboard" && `Gestiona las actividades de ${getSelectedTipoAreasText().toLowerCase()} de la UTVCO`}
@@ -453,7 +460,9 @@ export default function ActivityDashboard() {
           </div>
         </div>
 
-        <div className="flex-1 pl-0 pr-2 pt-2 pb-2 md:pl-1 md:pr-4 md:pt-4 md:pb-4 lg:pl-2 lg:pr-6 lg:pt-6 lg:pb-6 overflow-auto">{renderDashboardContent()}</div>
+        <div className="flex-1 pl-0 pr-2 pt-2 pb-2 md:pl-1 md:pr-4 md:pt-4 md:pb-4 lg:pl-2 lg:pr-6 lg:pt-6 lg:pb-6 overflow-auto">
+          {renderDashboardContent()}
+        </div>
       </div>
 
       {createdActivityId && createdActivity && (

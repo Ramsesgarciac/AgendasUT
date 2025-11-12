@@ -7,7 +7,7 @@ export interface Usuario {
 
 export interface Status {
   id: number;
-  // Add other fields as needed
+  nombre: string;
 }
 
 export interface Documentos {

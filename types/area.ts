@@ -1,7 +1,10 @@
+import { Status } from './status';
+
 export interface Activity {
   id: string;
   subject: string;
   date: string;
+  status: Status;
 }
 
 export interface TipoArea {
