@@ -23,14 +23,32 @@ export function ActivityTable({ filteredAreas, formatDate, statusList, usuarios 
     const INITIAL_ITEMS = 8
     const ITEMS_PER_LOAD = 3
 
+    const getEffectiveActivity = (activity: Activity) => {
+        const now = new Date()
+        const deadline = new Date(activity.fechaLimite)
+
+        // If deadline has passed and status is not "Terminada", change to "Dezfasada"
+        if (deadline < now && activity.status.nombre !== "Terminada") {
+            const dezfasadaStatus = statusList?.find(s => s.id === 2) // ID 2 is "Dezfasada"
+            if (dezfasadaStatus) {
+                return {
+                    ...activity,
+                    status: dezfasadaStatus
+                }
+            }
+        }
+
+        return activity
+    }
+
     const getStatusColor = (statusName: string): string => {
         switch (statusName) {
             case "En Proceso":
-                return "bg-amber-200 text-amber-700 border-amber-300"
+                return "bg-amber-100 text-gray-900 border-amber-100"
             case "Dezfasada":
-                return "bg-rose-400 text-rose-950 border-rose-500"
+                return "bg-rose-200 text-gray-900 border-rose-300"
             case "Terminada":
-                return "bg-emerald-400 text-emerald-950 border-emerald-600"
+                return "bg-emerald-200 text-gray-950 border-emerald-300"
             default:
                 return "bg-slate-400 text-slate-950 border-slate-500"
         }
@@ -148,15 +166,20 @@ export function ActivityTable({ filteredAreas, formatDate, statusList, usuarios 
                                                 {/* Fecha y Estado en la misma línea */}
                                                 <div className="flex items-center justify-between gap-2">
                                                     <div className="flex items-center text-xs text-gray-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
-                                                        <Calendar className="w-3.5 h-3.5 mr-1.5 flex-shrink-0 text-blue-500" />
+                                                        <Calendar className="w-3.5 h-3.5 mr-1.5 flex-shrink-0 text-gray-900 group-hover:text-blue-600" />
                                                         <span className="font-medium">
                                                             {formatDate(activity.date)}
                                                         </span>
                                                     </div>
-                                                    
-                                                    <Badge className={`text-xs font-semibold px-3 py-1.5 rounded-lg border-2 shadow-sm ${getStatusColor(activity.status.nombre)}`}>
-                                                        {activity.status.nombre}
-                                                    </Badge>
+
+                                                    {(() => {
+                                                        const effectiveActivity = getEffectiveActivity(activity)
+                                                        return (
+                                                            <Badge className={`text-xs font-semibold px-3 py-1.5 rounded-lg border-2 shadow-sm ${getStatusColor(effectiveActivity.status.nombre)}`}>
+                                                                {effectiveActivity.status.nombre}
+                                                            </Badge>
+                                                        )
+                                                    })()}
                                                 </div>
                                             </div>
                                         </ModalWithTabs>

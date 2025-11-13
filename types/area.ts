@@ -4,6 +4,7 @@ export interface Activity {
   id: string;
   subject: string;
   date: string;
+  fechaLimite: string | Date;
   status: Status;
 }
 
