@@ -75,6 +75,32 @@ export function ActivityTable({ filteredAreas, formatDate, statusList, usuarios 
         }
     }, [filteredAreas])
 
+    // Update displayed activities when filteredAreas content changes (including new activities)
+    React.useEffect(() => {
+        if (filteredAreas.length > 0) {
+            setDisplayedActivities(prev => {
+                const updated: Record<number, Activity[]> = {}
+                filteredAreas.forEach(area => {
+                    // Always use fresh data from filteredAreas to show all activities
+                    // Always show the first INITIAL_ITEMS activities for each area
+                    updated[area.id] = area.activities.slice(0, INITIAL_ITEMS)
+                })
+                return updated
+            })
+        }
+    }, [filteredAreas]) // Full dependency to catch any changes in activities
+
+    // Separate effect to update hasMore state
+    React.useEffect(() => {
+        if (filteredAreas.length > 0) {
+            const hasMoreItems = filteredAreas.some(area => {
+                // Check if there are more items than initially displayed
+                return area.activities.length > INITIAL_ITEMS
+            })
+            setHasMore(hasMoreItems)
+        }
+    }, [filteredAreas.map(area => area.activities.length).join(',')]) // Removed displayedActivities to prevent circular dependency
+
     const loadMore = React.useCallback(() => {
         if (isLoading) return
         
@@ -82,24 +108,27 @@ export function ActivityTable({ filteredAreas, formatDate, statusList, usuarios 
         
         // Simulate async loading
         setTimeout(() => {
-            const newDisplayed: Record<number, Activity[]> = {}
-            let hasMoreItems = false
-            
-            filteredAreas.forEach(area => {
-                const currentCount = displayedActivities[area.id]?.length || 0
-                const newCount = Math.min(currentCount + ITEMS_PER_LOAD, area.activities.length)
-                newDisplayed[area.id] = area.activities.slice(0, newCount)
+            setDisplayedActivities(prev => {
+                const newDisplayed: Record<number, Activity[]> = {}
+                let hasMoreItems = false
                 
-                if (newCount < area.activities.length) {
-                    hasMoreItems = true
-                }
+                filteredAreas.forEach(area => {
+                    const currentCount = prev[area.id]?.length || 0
+                    const newCount = Math.min(currentCount + ITEMS_PER_LOAD, area.activities.length)
+                    newDisplayed[area.id] = area.activities.slice(0, newCount)
+                    
+                    if (newCount < area.activities.length) {
+                        hasMoreItems = true
+                    }
+                })
+                
+                setHasMore(hasMoreItems)
+                return newDisplayed
             })
             
-            setDisplayedActivities(newDisplayed)
-            setHasMore(hasMoreItems)
             setIsLoading(false)
         }, 300)
-    }, [filteredAreas, displayedActivities, isLoading])
+    }, [filteredAreas, isLoading])
 
     const [loaderRef, scrollerRef] = useInfiniteScroll({
         hasMore,

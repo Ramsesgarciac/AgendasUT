@@ -149,10 +149,12 @@ export default function ActivityDashboard() {
           ...act,
           id: act.id.toString(),
           subject: act.asunto,
-          date: act.fechaLimite.toString()
+          date: act.fechaLimite.toString(),
+          // Ensure status is properly mapped, with fallback
+          status: act.status || statusList.find(s => s.id === (act as any).statusId) || { id: 1, nombre: "En Proceso" }
         }))
     }));
-  }, [areas, actividades]);
+  }, [areas, actividades, statusList]);
 
   const filteredAreasByTipo = useMemo(() => {
     if (selectedTipoAreaId === null) return areasWithActivities;
@@ -232,11 +234,14 @@ export default function ActivityDashboard() {
       
       const nuevaActividad = await createActividad(payload);
 
-      // Enriquecer con área
+      // Enriquecer con área y status
       const areaSeleccionada = areas.find(a => a.id === parseInt(formData.area));
+      const defaultStatus = statusList.find(s => s.id === payload.statusId) || { id: payload.statusId, nombre: "En Proceso" };
+      
       if (areaSeleccionada) {
         nuevaActividad.area = areaSeleccionada;
       }
+      nuevaActividad.status = defaultStatus;
 
       // Manejar comentario asincrónicamente
       if (formData.comment.trim()) {
