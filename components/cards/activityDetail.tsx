@@ -45,6 +45,45 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
     const { getDocumentos, deleteDocumento, viewDocumento, loading: documentosLoading } = useDocumentos()
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
 
+    // Register for status update notifications
+    useEffect(() => {
+        const handleActivityUpdate = (payload: any) => {
+            if (payload.type === 'STATUS_UPDATE' && fullActivity && payload.actividadId === fullActivity.id) {
+                console.log('🔄 ActivityDetail: Received status update via callback:', payload)
+                // Update the local activity state
+                setFullActivity(prev => prev ? {
+                    ...prev,
+                    status: statusList.find(s => s.id === payload.statusId) || prev.status
+                } : null)
+            }
+        }
+
+        // Register with the global callback system
+        if (typeof window !== 'undefined') {
+            // Register for global callbacks
+            if (!(window as any).registerActividadUpdateCallback) {
+                (window as any).registerActividadUpdateCallback = (callback: Function) => {
+                    if (!(window as any).updateCallbacks) {
+                        (window as any).updateCallbacks = new Set()
+                    }
+                    (window as any).updateCallbacks.add(callback)
+                }
+                (window as any).unregisterActividadUpdateCallback = (callback: Function) => {
+                    if ((window as any).updateCallbacks) {
+                        (window as any).updateCallbacks.delete(callback)
+                    }
+                }
+            }
+            (window as any).registerActividadUpdateCallback(handleActivityUpdate)
+        }
+
+        return () => {
+            if (typeof window !== 'undefined' && (window as any).unregisterActividadUpdateCallback) {
+                (window as any).unregisterActividadUpdateCallback(handleActivityUpdate)
+            }
+        }
+    }, [fullActivity?.id, statusList])
+
     const handleCompleteTask = useCallback(async () => {
         if (!fullActivity) return
         
@@ -52,13 +91,50 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
         
         setIsUpdatingStatus(true)
         try {
+            console.log('🚀 Starting task completion for activity:', activity.id)
+            
             await updateActividadStatus(activity.id, 3) // Status ID 3 for "Terminada"
+            
+            // Wait a bit to ensure the backend has processed the update
+            await new Promise(resolve => setTimeout(resolve, 500))
+            
             // Refresh the activity data to show the updated status
             const updatedActivity = await getActividadById(activity.id)
+            console.log('✅ Activity status updated:', updatedActivity.status)
             setFullActivity(updatedActivity)
+            
+            // Dispatch event to notify ALL components about the update
+            console.log('📡 Dispatching status update event:', { actividadId: activity.id, newStatus: 3 })
+            const statusUpdateEvent = new CustomEvent('actividadStatusUpdated', {
+                detail: {
+                    actividadId: activity.id,
+                    newStatus: 3,
+                    timestamp: Date.now(),
+                    fullActivity: updatedActivity
+                }
+            })
+            window.dispatchEvent(statusUpdateEvent)
+            
+            // Also notify via the global callback system if available
+            if (typeof window !== 'undefined' && (window as any).updateCallbacks) {
+                (window as any).updateCallbacks.forEach((callback: Function) => {
+                    try {
+                        callback({
+                            type: 'STATUS_UPDATE',
+                            actividadId: activity.id,
+                            statusId: 3,
+                            actividad: updatedActivity,
+                            timestamp: Date.now()
+                        })
+                    } catch (error) {
+                        console.error('Error in update callback:', error)
+                    }
+                })
+            }
+            
             alert('Tarea completada exitosamente')
         } catch (error) {
-            console.error('Error completing task:', error)
+            console.error('❌ Error completing task:', error)
             alert('Error al completar la tarea')
         } finally {
             setIsUpdatingStatus(false)

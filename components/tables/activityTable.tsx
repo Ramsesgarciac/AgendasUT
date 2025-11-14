@@ -3,7 +3,6 @@
 import React from "react"
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table"
 import { Spinner } from "@heroui/spinner"
-import { useInfiniteScroll } from "@heroui/use-infinite-scroll"
 import { Badge } from "@/components/ui/badge"
 import { FileText, Calendar } from "lucide-react"
 import { Area, Activity } from "@/types/area"
@@ -17,11 +16,22 @@ interface ActivityTableProps {
 }
 
 export function ActivityTable({ filteredAreas, formatDate, statusList, usuarios }: ActivityTableProps) {
-    const [displayedActivities, setDisplayedActivities] = React.useState<Record<number, Activity[]>>({})
-    const [hasMore, setHasMore] = React.useState(false)
     const [isLoading, setIsLoading] = React.useState(true)
     const INITIAL_ITEMS = 8
-    const ITEMS_PER_LOAD = 3
+
+    // Add debug logging for status changes
+    React.useEffect(() => {
+        console.log('📊 ActivityTable: filteredAreas updated with', filteredAreas.length, 'areas')
+        filteredAreas.forEach(area => {
+            console.log(`📊 Area ${area.id} (${area.name}): ${area.activities.length} activities`)
+            area.activities.slice(0, 3).forEach((activity, index) => {
+                console.log(`  Activity ${index + 1}: ID=${activity.id}, Status=${activity.status?.nombre}`)
+            })
+        })
+        
+        // Simulate loading
+        setTimeout(() => setIsLoading(false), 300)
+    }, [filteredAreas])
 
     const getEffectiveActivity = (activity: Activity) => {
         const now = new Date()
@@ -54,104 +64,27 @@ export function ActivityTable({ filteredAreas, formatDate, statusList, usuarios 
         }
     }
 
-    // Initialize displayed activities
-    React.useEffect(() => {
-        if (filteredAreas.length > 0) {
-            setIsLoading(true)
-            const initial: Record<number, Activity[]> = {}
-            filteredAreas.forEach(area => {
-                initial[area.id] = area.activities.slice(0, INITIAL_ITEMS)
-            })
-            setDisplayedActivities(initial)
-
-            // Check if there are more items to load
-            const hasMoreItems = filteredAreas.some(area => area.activities.length > INITIAL_ITEMS)
-            setHasMore(hasMoreItems)
-
-            // Simulate loading delay
-            setTimeout(() => {
-                setIsLoading(false)
-            }, 500)
-        }
-    }, [filteredAreas])
-
-    // Update displayed activities when filteredAreas content changes (including new activities)
-    React.useEffect(() => {
-        if (filteredAreas.length > 0) {
-            setDisplayedActivities(prev => {
-                const updated: Record<number, Activity[]> = {}
-                filteredAreas.forEach(area => {
-                    // Always use fresh data from filteredAreas to show all activities
-                    // Always show the first INITIAL_ITEMS activities for each area
-                    updated[area.id] = area.activities.slice(0, INITIAL_ITEMS)
-                })
-                return updated
-            })
-        }
-    }, [filteredAreas]) // Full dependency to catch any changes in activities
-
-    // Separate effect to update hasMore state
-    React.useEffect(() => {
-        if (filteredAreas.length > 0) {
-            const hasMoreItems = filteredAreas.some(area => {
-                // Check if there are more items than initially displayed
-                return area.activities.length > INITIAL_ITEMS
-            })
-            setHasMore(hasMoreItems)
-        }
-    }, [filteredAreas.map(area => area.activities.length).join(',')]) // Removed displayedActivities to prevent circular dependency
-
-    const loadMore = React.useCallback(() => {
-        if (isLoading) return
-        
-        setIsLoading(true)
-        
-        // Simulate async loading
-        setTimeout(() => {
-            setDisplayedActivities(prev => {
-                const newDisplayed: Record<number, Activity[]> = {}
-                let hasMoreItems = false
-                
-                filteredAreas.forEach(area => {
-                    const currentCount = prev[area.id]?.length || 0
-                    const newCount = Math.min(currentCount + ITEMS_PER_LOAD, area.activities.length)
-                    newDisplayed[area.id] = area.activities.slice(0, newCount)
-                    
-                    if (newCount < area.activities.length) {
-                        hasMoreItems = true
-                    }
-                })
-                
-                setHasMore(hasMoreItems)
-                return newDisplayed
-            })
-            
-            setIsLoading(false)
-        }, 300)
-    }, [filteredAreas, isLoading])
-
-    const [loaderRef, scrollerRef] = useInfiniteScroll({
-        hasMore,
-        onLoadMore: loadMore,
-    })
-
     // Get max rows needed
     const maxRows = React.useMemo(() => {
-        return Math.max(...Object.values(displayedActivities).map(acts => acts.length), 1)
-    }, [displayedActivities])
+        return Math.max(...filteredAreas.map(area => Math.min(area.activities.length, INITIAL_ITEMS)), 1)
+    }, [filteredAreas])
+
+    if (filteredAreas.length === 0) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="text-center text-muted-foreground">
+                    <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <h3 className="text-lg font-medium mb-2">No hay áreas seleccionadas</h3>
+                    <p className="text-sm">Selecciona al menos un área para ver las actividades</p>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <Table
             isHeaderSticky
             aria-label="Tabla de actividades por área"
-            baseRef={scrollerRef}
-            bottomContent={
-                hasMore ? (
-                    <div className="flex w-full justify-center">
-                        <Spinner ref={loaderRef} color="default" />
-                    </div>
-                ) : null
-            }
             classNames={{
                 base: "max-h-[780px] overflow-scroll",
                 table: "min-h-[400px]",
@@ -180,12 +113,20 @@ export function ActivityTable({ filteredAreas, formatDate, statusList, usuarios 
                 {Array.from({ length: maxRows }).map((_, rowIndex) => (
                     <TableRow key={rowIndex}>
                         {filteredAreas.map((area) => {
-                            const activity = displayedActivities[area.id]?.[rowIndex]
+                            const activity = area.activities[rowIndex]
                             
                             return (
                                 <TableCell key={area.id}>
                                     {activity ? (
-                                        <ModalWithTabs activity={{ id: parseInt(activity.id), subject: activity.subject, date: activity.date}} statusList={statusList} usuarios={usuarios}>
+                                        <ModalWithTabs 
+                                            activity={{ 
+                                                id: parseInt(activity.id), 
+                                                subject: activity.subject, 
+                                                date: activity.date
+                                            }} 
+                                            statusList={statusList} 
+                                            usuarios={usuarios}
+                                        >
                                             <div className="group p-4 rounded-xl bg-white border-2 border-gray-300 hover:border-blue-400 hover:shadow-xl hover:shadow-blue-100/50 transition-all duration-300 cursor-pointer">
                                                 {/* Título de la actividad */}
                                                 <h4 className="font-semibold text-sm text-gray-800 mb-4 line-clamp-2 leading-snug min-h-[2.5rem] group-hover:text-blue-600 transition-colors">
@@ -212,7 +153,7 @@ export function ActivityTable({ filteredAreas, formatDate, statusList, usuarios 
                                                 </div>
                                             </div>
                                         </ModalWithTabs>
-                                    ) : rowIndex === 0 && displayedActivities[area.id]?.length === 0 ? (
+                                    ) : rowIndex === 0 && area.activities.length === 0 ? (
                                         <div className="text-center py-6 text-default-400">
                                             <FileText className="w-5 h-5 mx-auto mb-2 opacity-40" />
                                             <p className="text-xs">Sin actividades</p>

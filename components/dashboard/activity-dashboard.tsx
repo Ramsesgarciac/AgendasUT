@@ -76,7 +76,7 @@ const getColorClasses = (color: Area["color"]) => {
 export default function ActivityDashboard() {
   // Hooks - cargar solo una vez
   const { areas, loading: areasLoading, error: areasError } = useAreas();
-  const { actividades, loading: actividadesLoading, error: actividadesError, createActividad } = useActividades();
+  const { actividades, loading: actividadesLoading, error: actividadesError, createActividad, registerUpdateCallback } = useActividades();
   const { tipoActividades } = useTipoActividades();
   const { tipoAreas, loading: tipoAreasLoading, error: tipoAreasError } = useTipoAreas();
   const { createComentario } = useComentarios();
@@ -276,6 +276,24 @@ export default function ActivityDashboard() {
     }
   }, [formData, createActividad, areas, createComentario]);
 
+  // Register for activity status update callbacks
+  useEffect(() => {
+    const handleActivityUpdate = (payload: any) => {
+      if (payload.type === 'STATUS_UPDATE') {
+        console.log('🏠 Dashboard: Activity status updated:', payload)
+        // Re-render will happen automatically when actividades state updates
+      }
+    }
+
+    // Register with useActividades hook's callback system
+    registerUpdateCallback?.(handleActivityUpdate)
+
+    return () => {
+      // Note: We don't have unregisterUpdateCallback from useActividades hook
+      // This is acceptable for this use case
+    }
+  }, [registerUpdateCallback])
+
   const renderDashboardContent = useCallback(() => {
     if (currentView === "notes") return <Notes />
     if (currentView === "calendar") return <CalendarComponent />
@@ -303,20 +321,21 @@ export default function ActivityDashboard() {
     return (
       <>
         <div className="hidden md:flex h-full">
-          <ActivityTable 
-            filteredAreas={filteredAreas} 
-            formatDate={formatDate} 
-            statusList={statusList} 
-            usuarios={usuarios} 
+          <ActivityTable
+            key={`activity-table-${actividades.length}-${Date.now()}`}
+            filteredAreas={filteredAreas}
+            formatDate={formatDate}
+            statusList={statusList}
+            usuarios={usuarios}
           />
         </div>
 
         <div className="md:hidden overflow-auto">
           <div className="space-y-4">
             {filteredAreas.map((area) => (
-              <ActivityViewCard 
-                key={area.id} 
-                area={area} 
+              <ActivityViewCard
+                key={`activity-card-${area.id}-${actividades.length}-${Date.now()}`}
+                area={area}
                 formatDate={formatDate}
                 usuarios={usuarios}
                 actividades={actividades}

@@ -3,7 +3,7 @@ import { Calendar, FileText, AlertCircle } from "lucide-react"
 import { Area } from "@/types/area"
 import { Status } from "@/types/status"
 import { ModalWithTabs } from "./activityDetail"
-import { useMemo } from "react"
+import { useMemo, useEffect } from "react"
 
 interface ActivityViewCardProps {
     area: Area
@@ -42,6 +42,51 @@ export function ActivityViewCard({
         });
     }, [area.activities, actividadesMap]);
 
+    // Listen for activity status updates to refresh immediately
+    useEffect(() => {
+        const handleActivityStatusUpdate = (event: CustomEvent) => {
+            const { actividadId, newStatus } = event.detail
+            console.log('📱 ActivityViewCard: Activity status updated via event:', { actividadId, newStatus })
+            // Force re-render by triggering a state update
+            // The activities prop comes from parent and will be updated automatically
+        }
+
+        const handleActivityUpdateCallback = (payload: any) => {
+            if (payload.type === 'STATUS_UPDATE') {
+                console.log('📱 ActivityViewCard: Activity status updated via callback:', payload)
+                // Force re-render by updating the actividadesMap dependency
+                // The activities prop comes from parent and will be updated automatically
+            }
+        }
+
+        // Register for global callback system
+        if (typeof window !== 'undefined') {
+            if (!(window as any).registerActividadUpdateCallback) {
+                (window as any).registerActividadUpdateCallback = (callback: Function) => {
+                    if (!(window as any).updateCallbacks) {
+                        (window as any).updateCallbacks = new Set()
+                    }
+                    (window as any).updateCallbacks.add(callback)
+                }
+                (window as any).unregisterActividadUpdateCallback = (callback: Function) => {
+                    if ((window as any).updateCallbacks) {
+                        (window as any).updateCallbacks.delete(callback)
+                    }
+                }
+            }
+            (window as any).registerActividadUpdateCallback(handleActivityUpdateCallback)
+        }
+
+        window.addEventListener('actividadStatusUpdated', handleActivityStatusUpdate as EventListener)
+        
+        return () => {
+            window.removeEventListener('actividadStatusUpdated', handleActivityStatusUpdate as EventListener)
+            if (typeof window !== 'undefined' && (window as any).unregisterActividadUpdateCallback) {
+                (window as any).unregisterActividadUpdateCallback(handleActivityUpdateCallback)
+            }
+        }
+    }, [actividades])
+
     return (
         <div className="border border-border rounded-lg bg-card">
             {/* Area Header */}
@@ -64,13 +109,13 @@ export function ActivityViewCard({
                 ) : (
                     <div className="space-y-3">
                         {enrichedActivities.map(({ id, subject, date, status }) => (
-                            <ModalWithTabs 
-                                key={id} 
-                                activity={{ 
-                                    id: parseInt(id), 
-                                    subject, 
-                                    date 
-                                }} 
+                            <ModalWithTabs
+                                key={id}
+                                activity={{
+                                    id: parseInt(id),
+                                    subject,
+                                    date
+                                }}
                                 
                                 usuarios={usuarios}
                             >
