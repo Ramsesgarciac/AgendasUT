@@ -5,12 +5,13 @@ import dynamic from "next/dynamic"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Calendar, Building2, User, Clock, FileText, AlertCircle, Edit2, Trash2, FileIcon, Eye, Plus } from "lucide-react"
+import { Calendar, Building2, User, Clock, FileText, AlertCircle, Edit2, Trash2, FileIcon, Eye, Plus, CheckCircle } from "lucide-react"
 import { getActividadById } from "@/lib/services/actividadService"
 import { Actividad } from "@/types/actividad"
 import { useStatus } from "@/hooks/useStatus"
 import { useUsuarios } from "@/hooks/useUsuarios"
 import { useDocumentos } from "@/hooks/useDocumentos"
+import { useActividades } from "@/hooks/useActividades"
 import { Documento } from "@/types/documento"
 import { DocumentCreate } from "./documentCreate"
 
@@ -38,9 +39,31 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
     
     const { status: hookStatusList } = propStatusList ? { status: propStatusList } : useStatus()
     const { usuarios: hookUsuarios } = propUsuarios ? { usuarios: propUsuarios } : useUsuarios()
+    const { updateActividadStatus } = useActividades()
     const statusList = propStatusList || hookStatusList
     const usuarios = propUsuarios || hookUsuarios
     const { getDocumentos, deleteDocumento, viewDocumento, loading: documentosLoading } = useDocumentos()
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+
+    const handleCompleteTask = useCallback(async () => {
+        if (!fullActivity) return
+        
+        if (!confirm('¿Estás seguro de que deseas completar esta tarea?')) return
+        
+        setIsUpdatingStatus(true)
+        try {
+            await updateActividadStatus(activity.id, 3) // Status ID 3 for "Terminada"
+            // Refresh the activity data to show the updated status
+            const updatedActivity = await getActividadById(activity.id)
+            setFullActivity(updatedActivity)
+            alert('Tarea completada exitosamente')
+        } catch (error) {
+            console.error('Error completing task:', error)
+            alert('Error al completar la tarea')
+        } finally {
+            setIsUpdatingStatus(false)
+        }
+    }, [fullActivity, activity.id, updateActividadStatus])
 
     // Cargar datos solo cuando el modal se abre
     useEffect(() => {
@@ -327,6 +350,29 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                                             </p>
                                         </div>
                                     </div>
+
+                                    {/* Completar Tarea Button */}
+                                    {fullActivity.status.id !== 3 && (
+                                        <div className="mt-6 flex justify-center">
+                                            <Button
+                                                onClick={handleCompleteTask}
+                                                disabled={isUpdatingStatus}
+                                                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {isUpdatingStatus ? (
+                                                    <>
+                                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                                        Completando...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <CheckCircle className="w-5 h-5 mr-2" />
+                                                        Completar Tarea
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    )}
                                 </>
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-12 space-y-4">

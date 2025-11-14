@@ -89,6 +89,18 @@ export const useActividades = () => {
     }
   };
 
+  const updateActividadStatusHandler = async (actividadId: number, statusId: number): Promise<Actividad> => {
+    try {
+      const actividadActualizada = await actividadService.updateActividadStatus(actividadId, statusId);
+      // Update the local state to reflect the status change
+      setActividades(prev => prev.map(act => act.id === actividadId ? actividadActualizada : act));
+      return actividadActualizada;
+    } catch (error) {
+      console.error('Error updating actividad status:', error);
+      throw error;
+    }
+  };
+
   return {
     actividades,
     tipoActividades,
@@ -96,6 +108,7 @@ export const useActividades = () => {
     error,
     createActividad: createActividadHandler,
     updateActividad: updateActividadHandler,
+    updateActividadStatus: updateActividadStatusHandler,
     getActividadById: getActividadByIdHandler
   };
 };
