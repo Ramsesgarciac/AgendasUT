@@ -5,12 +5,13 @@ import dynamic from "next/dynamic"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Calendar, Building2, User, Clock, FileText, AlertCircle, Edit2, Trash2, FileIcon, Eye, Plus } from "lucide-react"
+import { Calendar, Building2, User, Clock, FileText, AlertCircle, Edit2, Trash2, FileIcon, Eye, Plus, CheckCircle } from "lucide-react"
 import { getActividadById } from "@/lib/services/actividadService"
 import { Actividad } from "@/types/actividad"
 import { useStatus } from "@/hooks/useStatus"
 import { useUsuarios } from "@/hooks/useUsuarios"
 import { useDocumentos } from "@/hooks/useDocumentos"
+import { useActividades } from "@/hooks/useActividades"
 import { Documento } from "@/types/documento"
 import { DocumentCreate } from "./documentCreate"
 
@@ -38,9 +39,107 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
     
     const { status: hookStatusList } = propStatusList ? { status: propStatusList } : useStatus()
     const { usuarios: hookUsuarios } = propUsuarios ? { usuarios: propUsuarios } : useUsuarios()
+    const { updateActividadStatus } = useActividades()
     const statusList = propStatusList || hookStatusList
     const usuarios = propUsuarios || hookUsuarios
     const { getDocumentos, deleteDocumento, viewDocumento, loading: documentosLoading } = useDocumentos()
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+
+    // Register for status update notifications
+    useEffect(() => {
+        const handleActivityUpdate = (payload: any) => {
+            if (payload.type === 'STATUS_UPDATE' && fullActivity && payload.actividadId === fullActivity.id) {
+                console.log('🔄 ActivityDetail: Received status update via callback:', payload)
+                // Update the local activity state
+                setFullActivity(prev => prev ? {
+                    ...prev,
+                    status: statusList.find(s => s.id === payload.statusId) || prev.status
+                } : null)
+            }
+        }
+
+        // Register with the global callback system
+        if (typeof window !== 'undefined') {
+            // Register for global callbacks
+            if (!(window as any).registerActividadUpdateCallback) {
+                (window as any).registerActividadUpdateCallback = (callback: Function) => {
+                    if (!(window as any).updateCallbacks) {
+                        (window as any).updateCallbacks = new Set()
+                    }
+                    (window as any).updateCallbacks.add(callback)
+                }
+                (window as any).unregisterActividadUpdateCallback = (callback: Function) => {
+                    if ((window as any).updateCallbacks) {
+                        (window as any).updateCallbacks.delete(callback)
+                    }
+                }
+            }
+            (window as any).registerActividadUpdateCallback(handleActivityUpdate)
+        }
+
+        return () => {
+            if (typeof window !== 'undefined' && (window as any).unregisterActividadUpdateCallback) {
+                (window as any).unregisterActividadUpdateCallback(handleActivityUpdate)
+            }
+        }
+    }, [fullActivity?.id, statusList])
+
+    const handleCompleteTask = useCallback(async () => {
+        if (!fullActivity) return
+        
+        if (!confirm('¿Estás seguro de que deseas completar esta tarea?')) return
+        
+        setIsUpdatingStatus(true)
+        try {
+            console.log('🚀 Starting task completion for activity:', activity.id)
+            
+            await updateActividadStatus(activity.id, 3) // Status ID 3 for "Terminada"
+            
+            // Wait a bit to ensure the backend has processed the update
+            await new Promise(resolve => setTimeout(resolve, 500))
+            
+            // Refresh the activity data to show the updated status
+            const updatedActivity = await getActividadById(activity.id)
+            console.log('✅ Activity status updated:', updatedActivity.status)
+            setFullActivity(updatedActivity)
+            
+            // Dispatch event to notify ALL components about the update
+            console.log('📡 Dispatching status update event:', { actividadId: activity.id, newStatus: 3 })
+            const statusUpdateEvent = new CustomEvent('actividadStatusUpdated', {
+                detail: {
+                    actividadId: activity.id,
+                    newStatus: 3,
+                    timestamp: Date.now(),
+                    fullActivity: updatedActivity
+                }
+            })
+            window.dispatchEvent(statusUpdateEvent)
+            
+            // Also notify via the global callback system if available
+            if (typeof window !== 'undefined' && (window as any).updateCallbacks) {
+                (window as any).updateCallbacks.forEach((callback: Function) => {
+                    try {
+                        callback({
+                            type: 'STATUS_UPDATE',
+                            actividadId: activity.id,
+                            statusId: 3,
+                            actividad: updatedActivity,
+                            timestamp: Date.now()
+                        })
+                    } catch (error) {
+                        console.error('Error in update callback:', error)
+                    }
+                })
+            }
+            
+            alert('Tarea completada exitosamente')
+        } catch (error) {
+            console.error('❌ Error completing task:', error)
+            alert('Error al completar la tarea')
+        } finally {
+            setIsUpdatingStatus(false)
+        }
+    }, [fullActivity, activity.id, updateActividadStatus])
 
     // Cargar datos solo cuando el modal se abre
     useEffect(() => {
@@ -327,6 +426,29 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                                             </p>
                                         </div>
                                     </div>
+
+                                    {/* Completar Tarea Button */}
+                                    {fullActivity.status.id !== 3 && (
+                                        <div className="mt-6 flex justify-center">
+                                            <Button
+                                                onClick={handleCompleteTask}
+                                                disabled={isUpdatingStatus}
+                                                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {isUpdatingStatus ? (
+                                                    <>
+                                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                                        Completando...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <CheckCircle className="w-5 h-5 mr-2" />
+                                                        Completar Tarea
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    )}
                                 </>
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-12 space-y-4">
