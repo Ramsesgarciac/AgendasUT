@@ -45,7 +45,13 @@ class ActividadService extends BaseService {
       body: JSON.stringify(data),
     });
   };
+
+  updateActividadStatus = async (actividadId: number, statusId: number): Promise<Actividad> => {
+    return this.fetchWithAuth(`${this.baseUrl}/${actividadId}/status/${statusId}`, {
+      method: 'PATCH',
+    });
+  };
 }
 
 export const actividadService = new ActividadService();
-export const { getActividades, getActividadById, createActividad, updateActividad } = actividadService;
+export const { getActividades, getActividadById, createActividad, updateActividad, updateActividadStatus } = actividadService;
