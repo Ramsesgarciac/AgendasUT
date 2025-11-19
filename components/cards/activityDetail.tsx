@@ -325,7 +325,7 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
             <DialogContent className="max-w-4xl h-[70vh] overflow-hidden flex flex-col">
                 <DialogHeader className="pb-4 border-b">
                     <DialogTitle className="text-2xl font-bold text-gray-900">
-                        {fullActivity?.asunto.slice(0,45) || "Detalles de Actividad"}
+                        {fullActivity?.asunto || "Detalles de Actividad"}
                     </DialogTitle>
                 </DialogHeader>
                 
