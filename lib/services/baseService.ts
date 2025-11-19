@@ -115,6 +115,29 @@ class BaseService {
     return response.json();
   }
 
+  protected async fetchWithoutAuth(url: string, options: RequestInit = {}) {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string>),
+    };
+
+    if (options.body instanceof FormData) {
+      delete headers['Content-Type'];
+    }
+
+    const response = await fetch(url, {
+      ...options,
+      headers,
+      cache: 'default',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
   protected async fetchWithAuthBlob(url: string, options: RequestInit = {}): Promise<Response> {
     const baseHeaders = this.getAuthHeaders();
     const headers: Record<string, string> = {

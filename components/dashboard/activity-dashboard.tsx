@@ -51,6 +51,11 @@ const SidebarNav = dynamic(() => import('@/components/nav/sidebar').then(mod => 
   ssr: false
 });
 
+const SidebarFooter = dynamic(() => import('@/components/nav/sidebar').then(mod => ({ default: mod.SidebarFooter })), {
+  loading: () => <div className="h-16 bg-blue-500"></div>,
+  ssr: false
+});
+
 import { Area } from '@/types/area';
 import { Actividad } from '@/types/actividad';
 import { useAreas } from '@/hooks/useAreas';
@@ -351,6 +356,9 @@ export default function ActivityDashboard() {
           <SidebarNav
             currentView={currentView}
             setCurrentView={setCurrentView}
+            isSidebarCollapsed={isSidebarCollapsed}
+          />
+          <SidebarFooter
             isSidebarCollapsed={isSidebarCollapsed}
           />
         </div>

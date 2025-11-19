@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, X, Home, StickyNote, CalendarDays } from "lucide-react"
+import { ChevronLeft, ChevronRight, X, Home, StickyNote, CalendarDays, LogOut } from "lucide-react"
+import { useAuth } from "@/lib/contexts/AuthContext"
+import { useRouter } from "next/navigation"
 
 interface SidebarHeaderProps {
   isSidebarCollapsed: boolean;
@@ -92,4 +94,30 @@ export function SidebarNav({
       </div>
     </nav>
   )
+}
+
+interface SidebarFooterProps {
+  isSidebarCollapsed: boolean;
+}
+
+export function SidebarFooter({ isSidebarCollapsed }: SidebarFooterProps) {
+  const { logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
+
+  return (
+    <div className="p-4 border-t border-blue-800">
+      <button
+        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-red-400 hover:bg-red-600 hover:text-white ${isSidebarCollapsed ? "justify-center" : ""}`}
+        onClick={handleLogout}
+      >
+        <LogOut className="w-5 h-5 flex-shrink-0" />
+        {!isSidebarCollapsed && <span className="font-medium">Cerrar Sesión</span>}
+      </button>
+    </div>
+  );
 }

@@ -309,12 +309,6 @@ export function CalendarComponent() {
                           <Clock className="w-3 h-3 mr-1" />
                           {event.time}
                         </div>
-                        {event.location && (
-                          <div className="flex items-center text-xs text-muted-foreground">
-                            <MapPin className="w-3 h-3 mr-1" />
-                            {event.location}
-                          </div>
-                        )}
                       </div>
                     </div>
                   ))}
