@@ -64,7 +64,7 @@ class DocumentoService extends BaseService {
 
   uploadMultiple = async (
     files: File[],
-    documentos: { nombre: string; tipoDoc: string; idActividades: number; entregaId: number }[]
+    documentos: { nombre: string; tipoDoc: string; idActividades: number; entregaId: number; usuarioId: number }[]
   ): Promise<Documento[]> => {
     const formData = new FormData();
 
@@ -99,6 +99,7 @@ class DocumentoService extends BaseService {
         tipoDoc: 'Acuse',
         idActividades: documentos[0].idActividades, // Usar la primera actividad
         entregaId: documentos[0].entregaId, // Usar la primera entrega
+        usuarioId: documentos[0].usuarioId, // Usar el usuario del primer documento
         isAcuce: true
       };
     })();

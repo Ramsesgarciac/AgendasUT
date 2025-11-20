@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useDocumentos } from "@/hooks/useDocumentos"
 import { useActividades } from "@/hooks/useActividades"
 import { useEntregas } from "@/hooks/useEntregas"
+import { useAuth } from "@/lib/contexts/AuthContext"
 import { DocumentForm } from "@/types/documento"
 import { Actividad } from "@/types/actividad"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -24,14 +25,15 @@ export function DocumentCreate({ activityId, actividad: propActividad, isOpen, o
   const { uploadDocumentos, loading, error } = useDocumentos()
   const { actividades } = useActividades()
   const { entregas } = useEntregas()
+  const { user } = useAuth()
   const [documentos, setDocumentos] = useState<DocumentForm[]>([
-    { nombre: "", tipoDoc: "", file: null, entregaId: 0 }
+    { nombre: "", tipoDoc: "", file: null, entregaId: 0, usuarioId: user?.id || 0 }
   ])
 
   const actividad = propActividad || actividades.find(act => act.id === activityId) || null
 
   const addDocument = () => {
-    setDocumentos([...documentos, { nombre: "", tipoDoc: "", file: null, entregaId: 0 }])
+    setDocumentos([...documentos, { nombre: "", tipoDoc: "", file: null, entregaId: 0, usuarioId: user?.id || 0 }])
   }
 
   const removeDocument = (index: number) => {
@@ -58,13 +60,14 @@ export function DocumentCreate({ activityId, actividad: propActividad, isOpen, o
       nombre: d.nombre,
       tipoDoc: d.tipoDoc,
       idActividades: activityId,
-      entregaId: d.entregaId
+      entregaId: d.entregaId,
+      usuarioId: d.usuarioId
     }))
 
     try {
       await uploadDocumentos({ files, documentos: docsData })
       onClose()
-      setDocumentos([{ nombre: "", tipoDoc: "", file: null, entregaId: 0 }])
+      setDocumentos([{ nombre: "", tipoDoc: "", file: null, entregaId: 0, usuarioId: user?.id || 0 }])
     } catch (err) {
       console.error("Error subiendo documentos:", err)
     }
