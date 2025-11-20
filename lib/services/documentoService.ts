@@ -118,20 +118,6 @@ class DocumentoService extends BaseService {
       body: formData,
     });
   };
-
-  createDocumento = async (data: {
-    nombre: string;
-    tipoDoc: string;
-    isAcuce?: boolean;
-    idActividades: number;
-    entregaId: number;
-    usuarioId: number;
-  }): Promise<Documento> => {
-    return this.fetchWithAuth(this.baseUrl, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  };
 }
 
 export const documentoService = new DocumentoService();
