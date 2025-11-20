@@ -66,6 +66,7 @@ import { useComentarios } from '@/hooks/useComentarios';
 import { useColeccionComentarios } from '@/hooks/useColeccionComentarios';
 import { useStatus } from '@/hooks/useStatus';
 import { useUsuarios } from '@/hooks/useUsuarios';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 const getColorClasses = (color: Area["color"]) => {
   const colorMap = {
@@ -87,6 +88,7 @@ export default function ActivityDashboard() {
   const { createComentario } = useComentarios();
   const { status: statusList } = useStatus();
   const { usuarios } = useUsuarios();
+  const { user } = useAuth();
 
   const loading = areasLoading || actividadesLoading || tipoAreasLoading;
   const error = areasError || actividadesError || tipoAreasError;
@@ -232,7 +234,7 @@ export default function ActivityDashboard() {
         tipoActividad: formData.activityType,
         fechaLimite: formData.dueDate,
         idArea: parseInt(formData.area),
-        idUserCreate: 1,
+        idUserCreate: user?.id || 1,
         statusId: 1,
         crearColeccionComentarios: true,
       };
@@ -253,7 +255,7 @@ export default function ActivityDashboard() {
         createComentario({
           contenido: formData.comment,
           idActividad: nuevaActividad.id,
-          idUsuario: 1,
+          idUsuario: user?.id || 1,
         }).catch(err => console.error("Error creando comentario:", err));
       }
 

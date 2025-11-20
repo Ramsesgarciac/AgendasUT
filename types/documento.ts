@@ -7,6 +7,7 @@ export interface Documento {
   archivo: Buffer | null;
   actividad: Actividad;
   isAcuce: boolean;
+  usuarioId: number;
 }
 
 export interface DocumentForm {
@@ -14,4 +15,5 @@ export interface DocumentForm {
   tipoDoc: string;
   file: File | null;
   entregaId: number;
+  usuarioId: number;
 }
