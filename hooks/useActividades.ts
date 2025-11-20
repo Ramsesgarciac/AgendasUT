@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { actividadService } from '../lib/services/actividadService';
+import { documentoService } from '../lib/services/documentoService';
 import { getTipoActividades } from '../lib/services/tipoActividadService';
 import { TipoActividad } from '../types/tipoActividad';
 import { Actividad } from '../types/actividad';
@@ -15,6 +16,7 @@ interface CreateActividadData {
   idUserCreate: number;
   statusId: number;
   crearColeccionComentarios: boolean;
+  isAcuce?: boolean;
 }
 
 interface UpdateActividadData {
@@ -183,11 +185,62 @@ export const useActividades = () => {
     }
   }, [refreshActividades])
 
+  const createAcuseDocumento = async (actividad: Actividad, usuarioId: number): Promise<void> => {
+    try {
+      await documentoService.createDocumento({
+        nombre: `Acuse de Creación de Actividad: ${actividad.asunto}`,
+        tipoDoc: 'Acuse',
+        isAcuce: true,
+        idActividades: actividad.id,
+        entregaId: actividad.id, // Usar el ID de la actividad como entregaId
+        usuarioId: usuarioId
+      });
+    } catch (error) {
+      console.error('Error creating acuse document:', error);
+      throw error;
+    }
+  };
+
+  const createAcuseForNewActivity = async (actividad: Actividad, usuarioId: number): Promise<void> => {
+    try {
+      await documentoService.createDocumento({
+        nombre: `Acuse de Nueva Actividad: ${actividad.asunto}`,
+        tipoDoc: 'Acuse',
+        isAcuce: true,
+        idActividades: actividad.id,
+        entregaId: actividad.id,
+        usuarioId: usuarioId
+      });
+    } catch (error) {
+      console.error('Error creating acuse for new activity:', error);
+      throw error;
+    }
+  };
+
   const createActividadHandler = async (data: CreateActividadData): Promise<Actividad> => {
     try {
       const nuevaActividad = await actividadService.createActividad(data);
       // Opcional: Actualizar el estado local
       setActividades(prev => [...prev, nuevaActividad]);
+
+      // Crear acuse para la nueva actividad
+      try {
+        await createAcuseForNewActivity(nuevaActividad, data.idUserCreate);
+      } catch (error) {
+        console.error('Error creating acuse for new activity:', error);
+        // No lanzar error para no fallar la creación de la actividad
+      }
+
+      // Crear documento de acuse adicional si isAcuce es true
+      if (data.isAcuce) {
+        try {
+          await createAcuseDocumento(nuevaActividad, data.idUserCreate);
+        } catch (error) {
+          console.error('Error creating acuse document:', error);
+          // No lanzar error para no fallar la creación de la actividad
+        }
+      }
+
       return nuevaActividad;
     } catch (error) {
       console.error('Error creating actividad:', error);
@@ -247,6 +300,8 @@ export const useActividades = () => {
     loading,
     error,
     createActividad: createActividadHandler,
+    createAcuseDocumento,
+    createAcuseForNewActivity,
     updateActividad: updateActividadHandler,
     updateActividadStatus: updateActividadStatusHandler,
     getActividadById: getActividadByIdHandler,
