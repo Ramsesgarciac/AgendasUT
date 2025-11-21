@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { documentoService } from '../lib/services/documentoService';
 import { Documento } from '../types/documento';
+import { Actividad } from '../types/actividad';
 
 interface UploadDocumentosData {
   files: File[];
@@ -138,6 +139,28 @@ export const useDocumentos = () => {
     }
   };
 
+  /**
+   * Crea un acuse en PDF cuando se crea una actividad
+   * @param actividad - La actividad recién creada
+   * @param usuarioId - ID del usuario que creó la actividad
+   * @param entregaId - ID de la entrega asociada (debe existir en la BD)
+   */
+  const createActividadAcuse = async (actividad: Actividad, usuarioId: number, entregaId: number): Promise<Documento> => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await documentoService.createActividadAcuse(actividad, usuarioId, entregaId);
+      return result;
+    } catch (err) {
+      console.error('Error creating actividad acuse:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     error,
@@ -149,5 +172,6 @@ export const useDocumentos = () => {
     uploadDocumentos,
     downloadDocumento,
     viewDocumento,
+    createActividadAcuse,
   };
 };

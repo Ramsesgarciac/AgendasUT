@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { actividadService } from '../lib/services/actividadService';
 import { getTipoActividades } from '../lib/services/tipoActividadService';
+import { documentoService } from '../lib/services/documentoService';
 import { TipoActividad } from '../types/tipoActividad';
 import { Actividad } from '../types/actividad';
 
@@ -183,14 +184,34 @@ export const useActividades = () => {
     }
   }, [refreshActividades])
 
-  const createActividadHandler = async (data: CreateActividadData): Promise<Actividad> => {
+  const createActividadHandler = async (data: CreateActividadData, entregaId?: number): Promise<Actividad> => {
     try {
+      console.log('📝 Creating actividad...');
+      
+      // Crear la actividad
       const nuevaActividad = await actividadService.createActividad(data);
-      // Opcional: Actualizar el estado local
+      console.log('✅ Actividad created:', nuevaActividad);
+      
+      // Actualizar el estado local
       setActividades(prev => [...prev, nuevaActividad]);
+      
+      // Generar el acuse automáticamente si se proporciona entregaId
+      if (entregaId) {
+        try {
+          console.log('📄 Generating acuse PDF for actividad:', nuevaActividad.id);
+          await documentoService.createActividadAcuse(nuevaActividad, data.idUserCreate, entregaId);
+          console.log('✅ Acuse PDF generated successfully');
+        } catch (acuseError) {
+          // Log el error pero no fallar la creación de la actividad
+          console.error('⚠️ Error generating acuse PDF (actividad was created):', acuseError);
+        }
+      } else {
+        console.log('ℹ️ No entregaId provided, skipping acuse generation');
+      }
+      
       return nuevaActividad;
     } catch (error) {
-      console.error('Error creating actividad:', error);
+      console.error('❌ Error creating actividad:', error);
       throw error;
     }
   };
