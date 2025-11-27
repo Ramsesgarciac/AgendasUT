@@ -185,19 +185,28 @@ export const useActividades = () => {
   }, [refreshActividades])
 
   const createActividadHandler = async (data: CreateActividadData, entregaId?: number): Promise<Actividad> => {
+    console.log('🚀 ========== INICIANDO CREACIÓN DE ACTIVIDAD ==========');
+    console.log('📝 Data recibida:', data);
+    console.log('📦 EntregaId recibido:', entregaId);
+
     try {
-      console.log('📝 Creating actividad...');
-      
-      // Crear la actividad
+      // PASO 1: Crear la actividad
+      console.log('📝 PASO 1: Creando actividad en la base de datos...');
       const nuevaActividad = await actividadService.createActividad(data);
-      console.log('✅ Actividad created:', nuevaActividad);
-      
-      // Actualizar el estado local
+      console.log('✅ Actividad creada exitosamente:', nuevaActividad);
+
+      // PASO 2: Actualizar el estado local inmediatamente
+      console.log('📊 PASO 2: Actualizando estado local...');
       setActividades(prev => [...prev, nuevaActividad]);
-      
+      console.log('✅ Estado local actualizado');
+
+
+      console.log('🎉 ========== CREACIÓN COMPLETADA ==========');
       return nuevaActividad;
+      
     } catch (error) {
-      console.error('❌ Error creating actividad:', error);
+      console.error('❌ ========== ERROR CRÍTICO EN CREACIÓN ==========');
+      console.error('Error:', error);
       throw error;
     }
   };
@@ -205,7 +214,7 @@ export const useActividades = () => {
   const updateActividadHandler = async (id: number, data: UpdateActividadData): Promise<Actividad> => {
     try {
       const actividadActualizada = await actividadService.updateActividad(id, data);
-      // Opcional: Actualizar el estado local
+      // Actualizar el estado local
       setActividades(prev => prev.map(act => act.id === id ? actividadActualizada : act));
       return actividadActualizada;
     } catch (error) {

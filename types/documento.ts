@@ -4,10 +4,11 @@ export interface Documento {
   id: number;
   nombre: string;
   tipoDoc: string;
-  archivo: Buffer | null;
-  actividad: Actividad;
+  archivo?: Buffer | null;
+  actividad?: Actividad;
   isAcuce: boolean;
   usuarioId: number;
+  entregaId?: number;
 }
 
 export interface DocumentForm {
