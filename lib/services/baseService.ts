@@ -9,7 +9,9 @@ class BaseService {
   private static CACHE_DURATION = 30000; // 30 segundos
 
   private getAuthHeaders(): HeadersInit {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = typeof window !== 'undefined'
+      ? (localStorage.getItem('token') || sessionStorage.getItem('token'))
+      : null;
     return {
       'Authorization': token ? `Bearer ${token}` : '',
       'Content-Type': 'application/json',
@@ -104,12 +106,18 @@ class BaseService {
   private async executeRequest(url: string, options: RequestInit) {
     const response = await fetch(url, {
       ...options,
-      // Permitir cache del navegador para recursos estáticos
-      cache: 'default',
+      // Deshabilitar cache para evitar problemas con respuestas API
+      cache: 'no-cache',
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      let errorText = '';
+      try {
+        errorText = await response.text();
+      } catch (e) {
+        // Ignore
+      }
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText || response.statusText}`);
     }
 
     return response.json();
@@ -128,7 +136,7 @@ class BaseService {
     const response = await fetch(url, {
       ...options,
       headers,
-      cache: 'default',
+      cache: 'no-cache',
     });
 
     if (!response.ok) {
@@ -152,7 +160,7 @@ class BaseService {
     return fetch(url, {
       ...options,
       headers,
-      cache: 'default',
+      cache: 'no-cache',
     });
   }
 

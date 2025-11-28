@@ -67,7 +67,12 @@ import { useColeccionComentarios } from '@/hooks/useColeccionComentarios';
 import { useStatus } from '@/hooks/useStatus';
 import { useUsuarios } from '@/hooks/useUsuarios';
 import { useAuth } from '@/lib/contexts/AuthContext';
+<<<<<<< HEAD
 import { useDocumentos } from '@/hooks/useDocumentos';
+=======
+import { documentoService } from '@/lib/services/documentoService';
+import { actividadService } from '@/lib/services/actividadService';
+>>>>>>> 3a7898c424df373ef83d94898fbdca9d0de1d819
 
 const getColorClasses = (color: Area["color"]) => {
   const colorMap = {
@@ -257,12 +262,13 @@ export default function ActivityDashboard() {
       // Enriquecer con área y status
       const areaSeleccionada = areas.find(a => a.id === parseInt(formData.area));
       const defaultStatus = statusList.find(s => s.id === payload.statusId) || { id: payload.statusId, nombre: "En Proceso" };
-      
+
       if (areaSeleccionada) {
         nuevaActividad.area = areaSeleccionada;
       }
       nuevaActividad.status = defaultStatus;
 
+<<<<<<< HEAD
       // ============================================
       // PASO 2: CREAR EL ACUSE DE LA ACTIVIDAD
       // ============================================
@@ -291,6 +297,35 @@ export default function ActivityDashboard() {
       // ============================================
       // PASO 3: AGREGAR COMENTARIO INICIAL (Opcional)
       // ============================================
+=======
+      // Esperar un momento para asegurar que la actividad esté completamente creada en el servidor
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      // Verificar que la actividad existe en el servidor
+      try {
+        const actividadVerificada = await actividadService.getActividadById(nuevaActividad.id);
+        console.log('✅ Actividad verificada en servidor:', actividadVerificada.id);
+      } catch (error) {
+        console.error('❌ Error al verificar actividad:', error);
+        throw new Error('La actividad no pudo ser verificada en el servidor');
+      }
+
+      // Crear el acuse de la actividad
+      try {
+        console.log('📄 Creando acuse de la actividad recién creada...');
+        await documentoService.createActividadAcuse(
+          nuevaActividad,
+          payload.idUserCreate,
+          null
+        );
+        console.log('✅ Acuse creado exitosamente');
+      } catch (error) {
+        console.error('❌ Error al crear acuse:', error);
+        alert('⚠️ La actividad fue creada pero hubo un error al generar el acuse. Por favor contacta al administrador.');
+      }
+
+      // Manejar comentario asincrónicamente
+>>>>>>> 3a7898c424df373ef83d94898fbdca9d0de1d819
       if (formData.comment.trim()) {
         console.log('💬 Paso 3: Agregando comentario inicial...');
         createComentario({
