@@ -67,6 +67,7 @@ import { useColeccionComentarios } from '@/hooks/useColeccionComentarios';
 import { useStatus } from '@/hooks/useStatus';
 import { useUsuarios } from '@/hooks/useUsuarios';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useDocumentos } from '@/hooks/useDocumentos';
 
 const getColorClasses = (color: Area["color"]) => {
   const colorMap = {
@@ -89,6 +90,7 @@ export default function ActivityDashboard() {
   const { status: statusList } = useStatus();
   const { usuarios } = useUsuarios();
   const { user } = useAuth();
+  const { createAcuseActividad } = useDocumentos(); // NUEVO: Hook para crear acuse
 
   const loading = areasLoading || actividadesLoading || tipoAreasLoading;
   const error = areasError || actividadesError || tipoAreasError;
@@ -221,11 +223,21 @@ export default function ActivityDashboard() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }, []);
 
+  // ============================================
+  // FUNCIÓN ACTUALIZADA CON CREACIÓN DE ACUSE
+  // ============================================
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     
     try {
+      const userId = user?.id || 1;
+      
+      // ============================================
+      // PASO 1: CREAR LA ACTIVIDAD
+      // ============================================
+      console.log('📝 Paso 1: Creando actividad...');
+      
       const payload: any = {
         asunto: formData.subject,
         descripcion: formData.descripcion,
@@ -234,12 +246,13 @@ export default function ActivityDashboard() {
         tipoActividad: formData.activityType,
         fechaLimite: formData.dueDate,
         idArea: parseInt(formData.area),
-        idUserCreate: user?.id || 1,
+        idUserCreate: userId,
         statusId: 1,
         crearColeccionComentarios: true,
       };
       
       const nuevaActividad = await createActividad(payload);
+      console.log('✅ Actividad creada exitosamente:', nuevaActividad);
 
       // Enriquecer con área y status
       const areaSeleccionada = areas.find(a => a.id === parseInt(formData.area));
@@ -250,15 +263,47 @@ export default function ActivityDashboard() {
       }
       nuevaActividad.status = defaultStatus;
 
-      // Manejar comentario asincrónicamente
+      // ============================================
+      // PASO 2: CREAR EL ACUSE DE LA ACTIVIDAD
+      // ============================================
+      console.log('📄 Paso 2: Generando acuse para actividad ID:', nuevaActividad.id);
+      
+      try {
+        // Para acuses de creación de actividad, no hay entrega aún
+        // Usar 0 como entregaId temporal hasta que se cree una entrega real
+        const entregaId = 0;
+
+        await createAcuseActividad(nuevaActividad, userId, entregaId);
+        console.log('✅ Acuse creado y asociado a la actividad');
+        
+      } catch (acuseError) {
+        // Si falla el acuse, NO fallar todo el proceso
+        // La actividad ya está creada correctamente
+        console.warn('⚠️ No se pudo crear el acuse automáticamente:', acuseError);
+        
+        // Opcional: Puedes mostrar una notificación al usuario
+        // toast?.({
+        //   title: "Actividad creada",
+        //   description: "La actividad se creó correctamente, pero no se pudo generar el acuse automático.",
+        // });
+      }
+
+      // ============================================
+      // PASO 3: AGREGAR COMENTARIO INICIAL (Opcional)
+      // ============================================
       if (formData.comment.trim()) {
+        console.log('💬 Paso 3: Agregando comentario inicial...');
         createComentario({
           contenido: formData.comment,
           idActividad: nuevaActividad.id,
-          idUsuario: user?.id || 1,
-        }).catch(err => console.error("Error creando comentario:", err));
+          idUsuario: userId,
+        }).catch(err => console.error("⚠️ Error creando comentario:", err));
       }
 
+      // ============================================
+      // PASO 4: LIMPIAR Y CERRAR
+      // ============================================
+      
       // Cerrar modal y abrir diálogo de documento
       setIsModalOpen(false)
       setCreatedActivityId(nuevaActividad.id);
@@ -276,12 +321,17 @@ export default function ActivityDashboard() {
         activityType: "",
         comment: "",
       })
+      
+      console.log('🎉 Proceso completado exitosamente');
+      
     } catch (error) {
-      console.error("Error creando actividad:", error);
+      console.error("❌ Error creando actividad:", error);
+      // Aquí puedes agregar notificación de error si tienes sistema de toast
+      // toast?.({ title: "Error", description: "No se pudo crear la actividad" });
     } finally {
       setIsSubmitting(false)
     }
-  }, [formData, createActividad, areas, createComentario]);
+  }, [formData, createActividad, areas, createComentario, createAcuseActividad, user, statusList]);
 
   const renderDashboardContent = useCallback(() => {
     if (currentView === "notes") return <Notes />

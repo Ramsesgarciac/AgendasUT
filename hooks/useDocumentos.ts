@@ -145,6 +145,27 @@ export const useDocumentos = () => {
    * @param usuarioId - ID del usuario que creó la actividad
    * @param entregaId - ID de la entrega asociada (debe existir en la BD)
    */
+  const createAcuseActividad = async (
+    actividad: Actividad,
+    usuarioId: number,
+    entregaId: number
+  ): Promise<Documento[]> => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('📄 Creando acuse para actividad:', actividad.id);
+      const result = await documentoService.createAcuseActividad(actividad, usuarioId, entregaId);
+      console.log('✅ Acuse creado exitosamente');
+      return result;
+    } catch (err) {
+      console.error('❌ Error creando acuse de actividad:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
     loading,
@@ -157,5 +178,6 @@ export const useDocumentos = () => {
     uploadDocumentos,
     downloadDocumento,
     viewDocumento,
+    createAcuseActividad,
   };
 };
