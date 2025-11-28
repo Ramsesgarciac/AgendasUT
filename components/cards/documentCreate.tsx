@@ -59,7 +59,7 @@ export function DocumentCreate({ activityId, actividad: propActividad, isOpen, o
     const docsData = validDocumentos.map(d => ({
       nombre: d.nombre,
       tipoDoc: d.tipoDoc,
-      actividadId: activityId,
+      idActividades: activityId,
       entregaId: d.entregaId,
       usuarioId: d.usuarioId
     }))

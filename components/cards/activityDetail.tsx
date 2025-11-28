@@ -485,25 +485,27 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                                 </div>
                             ) : documentos.length > 0 ? (
                                 <div className="space-y-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="text-lg font-semibold text-gray-800">Documentos</h4>
+                                        <Button
+                                            onClick={() => setIsCreateMode(true)}
+                                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                                        >
+                                            <Plus className="w-4 h-4 mr-2" />
+                                            Agregar Documento
+                                        </Button>
+                                    </div>
+
                                     {regularDocs.length > 0 && (
                                         <div className="space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <h4 className="text-lg font-semibold text-gray-800">Documentos</h4>
-                                                <Button
-                                                    onClick={() => setIsCreateMode(true)}
-                                                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                                                >
-                                                    <Plus className="w-4 h-4 mr-2" />
-                                                    Agregar Documento
-                                                </Button>
-                                            </div>
+                                            <h4 className="text-base font-medium text-gray-700">Documentos Regulares</h4>
                                             {regularDocs.map(doc => renderDocumentItem(doc, false))}
                                         </div>
                                     )}
 
                                     {acuseDocs.length > 0 && (
                                         <div className="space-y-3">
-                                            <h4 className="text-lg font-semibold text-gray-800">Acuses de Recepción</h4>
+                                            <h4 className="text-base font-medium text-gray-700">Acuses de Recepción</h4>
                                             {acuseDocs.map(doc => renderDocumentItem(doc, true))}
                                         </div>
                                     )}
