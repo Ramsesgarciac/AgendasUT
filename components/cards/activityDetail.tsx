@@ -16,8 +16,8 @@ import { Documento } from "@/types/documento"
 import { DocumentCreate } from "./documentCreate"
 
 const DocumentEdit = dynamic(() => import('./documentEdit').then(mod => ({ default: mod.DocumentEdit })), {
-  loading: () => <div className="flex items-center justify-center p-4">Cargando...</div>,
-  ssr: false
+    loading: () => <div className="flex items-center justify-center p-4">Cargando...</div>,
+    ssr: false
 })
 
 interface ModalWithTabsProps {
