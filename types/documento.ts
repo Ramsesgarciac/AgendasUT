@@ -6,8 +6,10 @@ export interface Documento {
   tipoDoc: string;
   archivo?: Buffer | null;
   actividad?: Actividad;
+  idActividades?: number;
   isAcuce: boolean;
-  usuarioId: number;
+  usuario?: { id: number };
+  usuarioId?: number; // Keep for backward compatibility
   entregaId?: number;
 }
 

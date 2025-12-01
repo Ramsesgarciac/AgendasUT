@@ -42,8 +42,54 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
     const { updateActividadStatus } = useActividades()
     const statusList = propStatusList || hookStatusList
     const usuarios = propUsuarios || hookUsuarios
-    const { getDocumentos, deleteDocumento, viewDocumento, loading: documentosLoading } = useDocumentos()
+    const { getDocumentos, getDocumentosByActividad, deleteDocumento, viewDocumento, loading: documentosLoading } = useDocumentos()
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+
+    // ============================================
+    // NUEVA FUNCIÓN: Contar usuarios únicos en documentos
+    // ============================================
+    const uniqueUsersCount = useMemo(() => {
+        if (!documentos || documentos.length === 0) {
+            console.log('📊 No hay documentos para contar usuarios, total docs:', documentos?.length);
+            return 0;
+        }
+
+        // Extraer todos los usuarioId únicos de los documentos
+        const uniqueUserIds = new Set<number>();
+        
+        documentos.forEach(doc => {
+            const userId = doc.usuario?.id || doc.usuarioId;
+            console.log('📄 Documento:', doc.id, 'Usuario:', userId, 'Nombre:', doc.nombre);
+            if (userId && userId > 0) {
+                uniqueUserIds.add(userId);
+            }
+        });
+
+        const count = uniqueUserIds.size;
+        console.log(`📊 Usuarios únicos encontrados: ${count}`, Array.from(uniqueUserIds));
+        
+        return count;
+    }, [documentos]);
+
+    // Calcular si se debe mostrar el botón de completar
+    const shouldShowCompleteButton = useMemo(() => {
+        console.log('🔍 Evaluando shouldShowCompleteButton...');
+        console.log('  - Status ID:', fullActivity?.status.id);
+        console.log('  - Documentos totales:', documentos.length);
+        console.log('  - Usuarios únicos:', uniqueUsersCount);
+        
+        // No mostrar si la actividad ya está completada
+        if (fullActivity?.status.id === 3) {
+            console.log('❌ Botón oculto: actividad ya completada');
+            return false;
+        }
+
+        // Mostrar solo si hay más de 1 usuario
+        const shouldShow = uniqueUsersCount > 1;
+        console.log(`🔍 ¿Mostrar botón completar? ${shouldShow} (${uniqueUsersCount} usuarios únicos)`);
+        
+        return shouldShow;
+    }, [fullActivity?.status.id, documentos.length, uniqueUsersCount]);
 
     // Register for status update notifications
     useEffect(() => {
@@ -174,18 +220,19 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
         }
     }, [open, activity.id])
 
-    // Cargar documentos solo cuando se cambia a la pestaña de documentación
+    // Cargar documentos cuando se abre el modal
     useEffect(() => {
-        if (!open || activeTab !== "apartado2") return;
+        if (!open) return;
 
         let isMounted = true;
 
         const loadDocumentos = async () => {
             try {
-                const docs = await getDocumentos()
+                const allDocs = await getDocumentos();
+                const docs = allDocs.filter(doc => doc.idActividades === activity.id || doc.actividad?.id === activity.id);
                 if (isMounted) {
-                    const filteredDocs = docs.filter(doc => doc.actividad?.id === activity.id)
-                    setDocumentos(filteredDocs)
+                    setDocumentos(docs)
+                    console.log('📄 Documentos cargados:', docs.length);
                 }
             } catch (error) {
                 console.error('Error loading documents:', error)
@@ -200,13 +247,14 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
         return () => {
             isMounted = false;
         }
-    }, [open, activeTab, activity.id])
+    }, [open, activity.id])
 
     const loadDocumentos = useCallback(async () => {
         try {
-            const docs = await getDocumentos()
-            const filteredDocs = docs.filter(doc => doc.actividad?.id === activity.id)
-            setDocumentos(filteredDocs)
+            const allDocs = await getDocumentos();
+            const docs = allDocs.filter(doc => doc.idActividades === activity.id || doc.actividad?.id === activity.id);
+            setDocumentos(docs)
+            console.log('📄 Documentos recargados:', docs.length);
         } catch (error) {
             console.error('Error loading documents:', error)
             setDocumentos([])
@@ -273,11 +321,18 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                         <h4 className="font-semibold text-gray-900 text-sm truncate">
                             {doc.nombre}
                         </h4>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-1 ${
-                            isAcuse ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-indigo-700'
-                        }`}>
-                            {doc.tipoDoc}
-                        </span>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                isAcuse ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-indigo-700'
+                            }`}>
+                                {doc.tipoDoc}
+                            </span>
+                            {(doc.usuario?.id || doc.usuarioId) && (
+                                <span className="text-xs text-gray-500">
+                                    Usuario ID: {doc.usuario?.id || doc.usuarioId}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -427,8 +482,10 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                                         </div>
                                     </div>
 
-                                    {/* Completar Tarea Button */}
-                                    {fullActivity.status.id !== 3 && (
+                                    {/* ============================================ */}
+                                    {/* BOTÓN COMPLETAR CON VALIDACIÓN DE USUARIOS */}
+                                    {/* ============================================ */}
+                                    {shouldShowCompleteButton && (
                                         <div className="mt-6 flex justify-center">
                                             <Button
                                                 onClick={handleCompleteTask}
@@ -486,7 +543,12 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                             ) : documentos.length > 0 ? (
                                 <div className="space-y-6">
                                     <div className="flex items-center justify-between mb-4">
-                                        <h4 className="text-lg font-semibold text-gray-800">Documentos</h4>
+                                        <div>
+                                            <h4 className="text-lg font-semibold text-gray-800">Documentos</h4>
+                                            <p className="text-sm text-gray-500 mt-1">
+                                                {uniqueUsersCount} usuario(s) único(s) en documentos
+                                            </p>
+                                        </div>
                                         <Button
                                             onClick={() => setIsCreateMode(true)}
                                             className="bg-blue-600 hover:bg-blue-700 text-white"

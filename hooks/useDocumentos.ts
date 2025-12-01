@@ -28,6 +28,22 @@ export const useDocumentos = () => {
     }
   };
 
+  const getDocumentosByActividad = async (actividadId: number): Promise<Documento[]> => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await documentoService.getDocumentosByActividad(actividadId);
+      return result;
+    } catch (err) {
+      console.error('Error fetching documentos by actividad:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getDocumentoById = async (id: number): Promise<Documento> => {
     try {
       setLoading(true);
@@ -171,6 +187,7 @@ export const useDocumentos = () => {
     loading,
     error,
     getDocumentos,
+    getDocumentosByActividad,
     getDocumentoById,
     updateDocumento,
     updateDocumentoWithFile,

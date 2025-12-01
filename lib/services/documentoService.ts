@@ -9,6 +9,10 @@ class DocumentoService extends BaseService {
     return this.fetchWithAuth(this.baseUrl);
   };
 
+  getDocumentosByActividad = async (actividadId: number): Promise<Documento[]> => {
+    return this.fetchWithAuth(`${this.baseUrl}/actividad/${actividadId}`);
+  };
+
   getDocumentoById = async (id: number): Promise<Documento> => {
     return this.fetchWithAuth(`${this.baseUrl}/${id}`);
   };
