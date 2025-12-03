@@ -59,7 +59,7 @@ export const TabActividad: React.FC<TabActividadProps> = ({
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <InfoCard
                             icon={Building2}
                             label="Instancia Receptora"
@@ -82,7 +82,7 @@ export const TabActividad: React.FC<TabActividadProps> = ({
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                         <div className="p-4 rounded-lg bg-amber-50 border border-amber-200">
                             <div className="flex items-center gap-2 mb-2">
                                 <Clock className="w-4 h-4 text-amber-600" />
