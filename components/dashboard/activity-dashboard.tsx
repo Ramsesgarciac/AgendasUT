@@ -132,12 +132,13 @@ export default function ActivityDashboard() {
     return () => window.removeEventListener("resize", handleResize)
   }, [])
 
-  // Initialize selectedAreaIds - solo cuando areas cambia
+  // Initialize selectedAreaIds - solo cuando areas cambia y user está disponible
   useEffect(() => {
-    if (areas.length > 0 && selectedAreaIds.length === 0) {
-      setSelectedAreaIds(areas.map((area) => area.id));
+    if (areas.length > 0 && user && user.areas && selectedAreaIds.length === 0) {
+      const userAreaIds = user.areas.map((area) => area.id);
+      setSelectedAreaIds(userAreaIds);
     }
-  }, [areas.length]); // Dependencia optimizada
+  }, [areas.length, user]); // Dependencia incluye user
 
   // Initialize selectedTipoAreaId
   useEffect(() => {
