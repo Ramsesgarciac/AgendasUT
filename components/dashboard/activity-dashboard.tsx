@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@heroui/badge"
@@ -98,6 +98,9 @@ export default function ActivityDashboard() {
   // Estados
   const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([])
   const [selectedTipoAreaId, setSelectedTipoAreaId] = useState<number | null>(null)
+
+  // Ref para rastrear si ya se inicializó el filtro de tipo de área
+  const tipoAreaInitialized = useRef(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showDocumentDialog, setShowDocumentDialog] = useState(false)
   const [createdActivityId, setCreatedActivityId] = useState<number | null>(null)
@@ -140,18 +143,39 @@ export default function ActivityDashboard() {
     }
   }, [areas.length, user]); // Dependencia incluye user
 
-  // Initialize selectedTipoAreaId - Auto-select user's area type
+  // Initialize selectedTipoAreaId - Auto-select user's area type ONLY ONCE on login
   useEffect(() => {
-    if (tipoAreas.length > 0 && user && user.areas && user.areas.length > 0) {
-      // Always set to user's area tipoArea when user is available
-      if (user.areas[0].tipoArea) {
-        setSelectedTipoAreaId(user.areas[0].tipoArea.id);
+    // Solo inicializar una vez cuando tengamos los datos necesarios
+    if (!tipoAreaInitialized.current && tipoAreas.length > 0 && areas.length > 0) {
+      console.log('🔍 DEBUG - Inicializando filtro de tipo de área');
+      console.log('👤 User areas:', user?.areas);
+      console.log('📋 All areas:', areas);
+      console.log('🏷️ Tipo areas:', tipoAreas);
+
+      if (user && user.areas && user.areas.length > 0) {
+        // Buscar el área completa del usuario en la lista de áreas para obtener su tipoArea
+        const userAreaId = user.areas[0].id;
+        const fullUserArea = areas.find(area => area.id === userAreaId);
+
+        console.log('🎯 User area ID:', userAreaId);
+        console.log('🎯 Full user area:', fullUserArea);
+
+        if (fullUserArea && fullUserArea.tipoArea) {
+          console.log('✅ Setting tipoArea to:', fullUserArea.tipoArea.nombre, '(ID:', fullUserArea.tipoArea.id, ')');
+          setSelectedTipoAreaId(fullUserArea.tipoArea.id);
+          tipoAreaInitialized.current = true;
+        } else if (selectedTipoAreaId === null) {
+          console.log('⚠️ No se encontró tipoArea en el área del usuario, usando primer tipoArea');
+          setSelectedTipoAreaId(tipoAreas[0].id);
+          tipoAreaInitialized.current = true;
+        }
+      } else if (selectedTipoAreaId === null) {
+        console.log('⚠️ No hay usuario o áreas de usuario, usando primer tipoArea');
+        setSelectedTipoAreaId(tipoAreas[0].id);
+        tipoAreaInitialized.current = true;
       }
-    } else if (tipoAreas.length > 0 && selectedTipoAreaId === null) {
-      // Fallback to first tipoArea if no user areas
-      setSelectedTipoAreaId(tipoAreas[0].id);
     }
-  }, [tipoAreas.length, user]); // Include user in dependencies
+  }, [tipoAreas.length, areas.length, user, selectedTipoAreaId]); // Include all dependencies
 
   // Memoización pesada - solo recalcular cuando cambian areas o actividades
   const areasWithActivities = useMemo(() => {
