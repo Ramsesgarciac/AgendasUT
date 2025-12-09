@@ -1,15 +1,11 @@
 {
-
   "disable-hardware-acceleration": true,
-
   "window.titleBarStyle": "native",
-  "workbench.colorTheme": "Quantum Synthwave",
+  "workbench.colorTheme": "Tokyo Night",
   "workbench.iconTheme": "material-icon-theme",
   "workbench.statusBar.visible": true,
-  
   "editor.fontLigatures": true,
   "editor.fontFamily": "Fira Code, Consolas, 'Courier New', monospace",
-  
   "workbench.startupEditor": "none",
   "editor.renderWhitespace": "none",
   "editor.cursorBlinking": "expand",

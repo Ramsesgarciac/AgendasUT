@@ -12,7 +12,7 @@ import { Plus, ChevronDown, Menu, FileText } from "lucide-react"
 
 // Dynamic imports con suspense
 const Notes = dynamic(() => import("@/app/notes/page").then(mod => ({ default: mod.Notes })), {
-  loading: () => <div className="flex items-center justify-center h-full">Cargando notas...</div>,
+  loading: () => <div className="flex   items-center justify-center h-full">Cargando notas...</div>,
   ssr: false
 });
 
@@ -140,17 +140,23 @@ export default function ActivityDashboard() {
     }
   }, [areas.length, user]); // Dependencia incluye user
 
-  // Initialize selectedTipoAreaId
+  // Initialize selectedTipoAreaId - Auto-select user's area type
   useEffect(() => {
-    if (tipoAreas.length > 0 && selectedTipoAreaId === null) {
+    if (tipoAreas.length > 0 && user && user.areas && user.areas.length > 0) {
+      // Always set to user's area tipoArea when user is available
+      if (user.areas[0].tipoArea) {
+        setSelectedTipoAreaId(user.areas[0].tipoArea.id);
+      }
+    } else if (tipoAreas.length > 0 && selectedTipoAreaId === null) {
+      // Fallback to first tipoArea if no user areas
       setSelectedTipoAreaId(tipoAreas[0].id);
     }
-  }, [tipoAreas.length]); // Dependencia optimizada
+  }, [tipoAreas.length, user]); // Include user in dependencies
 
   // Memoización pesada - solo recalcular cuando cambian areas o actividades
   const areasWithActivities = useMemo(() => {
     if (!areas.length || !actividades.length) return areas;
-    
+
     return areas.map(area => ({
       ...area,
       activities: actividades
@@ -187,7 +193,7 @@ export default function ActivityDashboard() {
   }, []);
 
   const handleAreaToggle = useCallback((areaId: number) => {
-    setSelectedAreaIds((prev) => 
+    setSelectedAreaIds((prev) =>
       prev.includes(areaId) ? prev.filter((id) => id !== areaId) : [...prev, areaId]
     )
   }, []);
@@ -230,15 +236,15 @@ export default function ActivityDashboard() {
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    
+
     try {
       const userId = user?.id || 1;
-      
+
       // ============================================
       // PASO 1: CREAR LA ACTIVIDAD
       // ============================================
       console.log('📝 Paso 1: Creando actividad...');
-      
+
       const payload: any = {
         asunto: formData.subject,
         descripcion: formData.descripcion,
@@ -251,14 +257,14 @@ export default function ActivityDashboard() {
         statusId: 1,
         crearColeccionComentarios: true,
       };
-      
+
       const nuevaActividad = await createActividad(payload);
       console.log('✅ Actividad creada exitosamente:', nuevaActividad);
 
       // Enriquecer con área y status
       const areaSeleccionada = areas.find(a => a.id === parseInt(formData.area));
       const defaultStatus = statusList.find(s => s.id === payload.statusId) || { id: payload.statusId, nombre: "En Proceso" };
-      
+
       if (areaSeleccionada) {
         nuevaActividad.area = areaSeleccionada;
       }
@@ -268,7 +274,7 @@ export default function ActivityDashboard() {
       // PASO 2: CREAR EL ACUSE DE LA ACTIVIDAD
       // ============================================
       console.log('📄 Paso 2: Generando acuse para actividad ID:', nuevaActividad.id);
-      
+
       try {
         // Para acuses de creación de actividad, no hay entrega aún
         // Usar 0 como entregaId temporal hasta que se cree una entrega real
@@ -276,12 +282,12 @@ export default function ActivityDashboard() {
 
         await createAcuseActividad(nuevaActividad, userId, entregaId);
         console.log('✅ Acuse creado y asociado a la actividad');
-        
+
       } catch (acuseError) {
         // Si falla el acuse, NO fallar todo el proceso
         // La actividad ya está creada correctamente
         console.warn('⚠️ No se pudo crear el acuse automáticamente:', acuseError);
-        
+
         // Opcional: Puedes mostrar una notificación al usuario
         // toast?.({
         //   title: "Actividad creada",
@@ -304,7 +310,7 @@ export default function ActivityDashboard() {
       // ============================================
       // PASO 4: LIMPIAR Y CERRAR
       // ============================================
-      
+
       // Cerrar modal y abrir diálogo de documento
       setIsModalOpen(false)
       setCreatedActivityId(nuevaActividad.id);
@@ -322,9 +328,9 @@ export default function ActivityDashboard() {
         activityType: "",
         comment: "",
       })
-      
+
       console.log('🎉 Proceso completado exitosamente');
-      
+
     } catch (error) {
       console.error("❌ Error creando actividad:", error);
       // Aquí puedes agregar notificación de error si tienes sistema de toast
@@ -361,20 +367,20 @@ export default function ActivityDashboard() {
     return (
       <>
         <div className="hidden md:flex h-full">
-          <ActivityTable 
-            filteredAreas={filteredAreas} 
-            formatDate={formatDate} 
-            statusList={statusList} 
-            usuarios={usuarios} 
+          <ActivityTable
+            filteredAreas={filteredAreas}
+            formatDate={formatDate}
+            statusList={statusList}
+            usuarios={usuarios}
           />
         </div>
 
         <div className="md:hidden overflow-auto">
           <div className="space-y-4">
             {filteredAreas.map((area) => (
-              <ActivityViewCard 
-                key={area.id} 
-                area={area} 
+              <ActivityViewCard
+                key={area.id}
+                area={area}
                 formatDate={formatDate}
                 usuarios={usuarios}
                 actividades={actividades}
