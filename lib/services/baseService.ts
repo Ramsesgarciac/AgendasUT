@@ -5,7 +5,7 @@ class BaseService {
     timestamp: number;
     promise?: Promise<any>;
   }>();
-  
+
   private static CACHE_DURATION = 30000; // 30 segundos
 
   private getAuthHeaders(): HeadersInit {
@@ -50,22 +50,22 @@ class BaseService {
       const cached = BaseService.requestCache.get(cacheKey);
       if (cached) {
         const age = Date.now() - cached.timestamp;
-        
+
         // Si el request está en progreso, esperar
         if (cached.promise) {
           return cached.promise;
         }
-        
+
         // Si está en cache y no expiró, retornar data cacheada
         if (age < BaseService.CACHE_DURATION) {
-          console.log(`✓ Cache hit: ${url} (${Math.round(age/1000)}s old)`);
+          // console.log(`✓ Cache hit: ${url} (${Math.round(age/1000)}s old)`);
           return cached.data;
         }
       }
 
       // Crear nueva promesa y cachearla inmediatamente
       const requestPromise = this.executeRequest(url, { ...options, headers });
-      
+
       BaseService.requestCache.set(cacheKey, {
         data: null,
         timestamp: Date.now(),
@@ -74,13 +74,13 @@ class BaseService {
 
       try {
         const data = await requestPromise;
-        
+
         // Guardar resultado en cache
         BaseService.requestCache.set(cacheKey, {
           data,
           timestamp: Date.now()
         });
-        
+
         return data;
       } catch (error) {
         // Remover del cache en caso de error

@@ -35,6 +35,14 @@ export const useActividades = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const limit = 50; // Actividades por página
+
   // Callback to notify parent components of updates - use global system
   const [updateCallbacks, setUpdateCallbacks] = useState<Set<Function>>(new Set());
 
@@ -88,7 +96,7 @@ export const useActividades = () => {
         console.error('Error in local update callback:', error);
       }
     });
-    
+
     // Notify global callbacks
     if (typeof window !== 'undefined' && (window as any).updateCallbacks) {
       (window as any).updateCallbacks.forEach((callback: Function) => {
@@ -104,26 +112,34 @@ export const useActividades = () => {
   // Function to refresh activities data
   const refreshActividades = useCallback(async () => {
     try {
-      console.log('🔄 useActividades: Refreshing activities data...')
-      const actividadesData = await actividadService.getActividades();
-      setActividades(actividadesData);
-      console.log('✅ useActividades: Activities data refreshed')
+      const actividadesResponse = await actividadService.getActividades(1, limit);
+      setActividades(actividadesResponse.data);
+      setTotalPages(actividadesResponse.meta.totalPages);
+      setTotalItems(actividadesResponse.meta.total);
+      setCurrentPage(actividadesResponse.meta.page);
+      setHasMore(actividadesResponse.meta.page < actividadesResponse.meta.totalPages);
     } catch (err) {
       console.error('❌ Error refreshing actividades:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     }
-  }, []);
+  }, [limit]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [actividadesData, tipoActividadesData] = await Promise.all([
-          actividadService.getActividades(),
+        const [actividadesResponse, tipoActividadesData] = await Promise.all([
+          actividadService.getActividades(1, limit), // Primera página
           getTipoActividades()
         ]);
 
-        setActividades(actividadesData);
+        // Extraer datos y metadata de la respuesta paginada
+        setActividades(actividadesResponse.data);
+        setTotalPages(actividadesResponse.meta.totalPages);
+        setTotalItems(actividadesResponse.meta.total);
+        setCurrentPage(actividadesResponse.meta.page);
+        setHasMore(actividadesResponse.meta.page < actividadesResponse.meta.totalPages);
+
         setTipoActividades(tipoActividadesData);
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -157,7 +173,7 @@ export const useActividades = () => {
     }
 
     window.addEventListener('actividadStatusUpdated', handleActivityStatusUpdate as EventListener)
-    
+
     // Register for global callback system
     if (typeof window !== 'undefined') {
       if (!(window as any).registerActividadUpdateCallback) {
@@ -175,7 +191,7 @@ export const useActividades = () => {
       }
       (window as any).registerActividadUpdateCallback(handleActivityUpdateCallback)
     }
-    
+
     return () => {
       window.removeEventListener('actividadStatusUpdated', handleActivityStatusUpdate as EventListener)
       if (typeof window !== 'undefined' && (window as any).unregisterActividadUpdateCallback) {
@@ -203,7 +219,7 @@ export const useActividades = () => {
 
       console.log('🎉 ========== CREACIÓN COMPLETADA ==========');
       return nuevaActividad;
-      
+
     } catch (error) {
       console.error('❌ ========== ERROR CRÍTICO EN CREACIÓN ==========');
       console.error('Error:', error);
@@ -235,10 +251,10 @@ export const useActividades = () => {
   const updateActividadStatusHandler = async (actividadId: number, statusId: number): Promise<Actividad> => {
     try {
       console.log('🔄 useActividades: Starting status update for activity:', actividadId, 'to status:', statusId);
-      
+
       const actividadActualizada = await actividadService.updateActividadStatus(actividadId, statusId);
       console.log('✅ useActividades: Received updated activity:', actividadActualizada);
-      
+
       // Update the local state immediately
       setActividades(prev => {
         const newActividades = prev.map(act => act.id === actividadId ? actividadActualizada : act);
@@ -248,7 +264,7 @@ export const useActividades = () => {
 
       // Notify all registered callbacks immediately
       notifyUpdateCallbacks({ type: 'STATUS_UPDATE', actividadId, statusId, actividad: actividadActualizada });
-      
+
       console.log('📡 useActividades: Notified all callbacks about status update');
       return actividadActualizada;
     } catch (error) {
@@ -257,15 +273,46 @@ export const useActividades = () => {
     }
   };
 
+  // Function to load more activities (infinite scroll)
+  const loadMoreActividades = useCallback(async () => {
+    if (!hasMore || loadingMore) return;
+
+    try {
+      setLoadingMore(true);
+      const nextPage = currentPage + 1;
+      const actividadesResponse = await actividadService.getActividades(nextPage, limit);
+
+      // Append new activities to existing ones
+      setActividades(prev => [...prev, ...actividadesResponse.data]);
+      setTotalPages(actividadesResponse.meta.totalPages);
+      setTotalItems(actividadesResponse.meta.total);
+      setCurrentPage(actividadesResponse.meta.page);
+      setHasMore(actividadesResponse.meta.page < actividadesResponse.meta.totalPages);
+    } catch (err) {
+      console.error('❌ Error loading more actividades:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [currentPage, hasMore, loadingMore, limit]);
+
   return {
     actividades,
     tipoActividades,
     loading,
+    loadingMore,
     error,
+    // Pagination info
+    currentPage,
+    totalPages,
+    totalItems,
+    hasMore,
+    // Functions
     createActividad: createActividadHandler,
     updateActividad: updateActividadHandler,
     updateActividadStatus: updateActividadStatusHandler,
     getActividadById: getActividadByIdHandler,
+    loadMoreActividades,
     registerUpdateCallback,
     unregisterUpdateCallback
   };

@@ -1,15 +1,31 @@
 import { Actividad } from '../../types/actividad';
 import BaseService from './baseService';
 
+interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
 class ActividadService extends BaseService {
   private baseUrl = '/api/actividades';
 
-  getActividades = async (): Promise<Actividad[]> => {
-    return this.fetchWithAuth(this.baseUrl);
+  getActividades = async (page: number = 1, limit: number = 50): Promise<PaginatedResponse<Actividad>> => {
+    const url = `${this.baseUrl}?page=${page}&limit=${limit}`;
+    return this.fetchWithAuth(url);
   };
 
   getActividadById = async (id: number): Promise<Actividad> => {
     return this.fetchWithAuth(`${this.baseUrl}/${id}`);
+  };
+
+  getActividadesByArea = async (areaId: number, page: number = 1, limit: number = 10): Promise<PaginatedResponse<Actividad>> => {
+    const url = `${this.baseUrl}/area/${areaId}?page=${page}&limit=${limit}`;
+    return this.fetchWithAuth(url);
   };
 
   createActividad = async (data: {

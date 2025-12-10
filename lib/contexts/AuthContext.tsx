@@ -53,6 +53,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       localStorage.setItem('token', access_token);
       localStorage.setItem('user', JSON.stringify(usuario));
+
+      // Disparar evento para que otros contextos sepan que el usuario se logueó
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('user-logged-in'));
+      }
     } catch (error) {
       throw error;
     }

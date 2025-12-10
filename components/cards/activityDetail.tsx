@@ -45,7 +45,7 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
     // ============================================
     const uniqueUsersCount = useMemo(() => {
         if (!documentos || documentos.length === 0) {
-            console.log('📊 No hay documentos para contar usuarios, total docs:', documentos?.length);
+
             return 0;
         }
 
@@ -54,34 +54,34 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
         
         documentos.forEach(doc => {
             const userId = doc.usuario?.id || doc.usuarioId;
-            console.log('📄 Documento:', doc.id, 'Usuario:', userId, 'Nombre:', doc.nombre);
+
             if (userId && userId > 0) {
                 uniqueUserIds.add(userId);
             }
         });
 
         const count = uniqueUserIds.size;
-        console.log(`📊 Usuarios únicos encontrados: ${count}`, Array.from(uniqueUserIds));
+
         
         return count;
     }, [documentos]);
 
     // Calcular si se debe mostrar el botón de completar
     const shouldShowCompleteButton = useMemo(() => {
-        console.log('🔍 Evaluando shouldShowCompleteButton...');
-        console.log('  - Status ID:', fullActivity?.status.id);
-        console.log('  - Documentos totales:', documentos.length);
-        console.log('  - Usuarios únicos:', uniqueUsersCount);
+
+
+
+
         
         // No mostrar si la actividad ya está completada
         if (fullActivity?.status.id === 3) {
-            console.log('❌ Botón oculto: actividad ya completada');
+
             return false;
         }
 
         // Mostrar solo si hay más de 1 usuario
         const shouldShow = uniqueUsersCount > 1;
-        console.log(`🔍 ¿Mostrar botón completar? ${shouldShow} (${uniqueUsersCount} usuarios únicos)`);
+
         
         return shouldShow;
     }, [fullActivity?.status.id, documentos.length, uniqueUsersCount]);
@@ -90,7 +90,7 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
     useEffect(() => {
         const handleActivityUpdate = (payload: any) => {
             if (payload.type === 'STATUS_UPDATE' && fullActivity && payload.actividadId === fullActivity.id) {
-                console.log('🔄 ActivityDetail: Received status update via callback:', payload)
+
                 // Update the local activity state
                 setFullActivity(prev => prev ? {
                     ...prev,
@@ -132,7 +132,7 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
         
         setIsUpdatingStatus(true)
         try {
-            console.log('🚀 Starting task completion for activity:', activity.id)
+
             
             await updateActividadStatus(activity.id, 3) // Status ID 3 for "Terminada"
             
@@ -141,11 +141,11 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
             
             // Refresh the activity data to show the updated status
             const updatedActivity = await getActividadById(activity.id)
-            console.log('✅ Activity status updated:', updatedActivity.status)
+
             setFullActivity(updatedActivity)
             
             // Dispatch event to notify ALL components about the update
-            console.log('📡 Dispatching status update event:', { actividadId: activity.id, newStatus: 3 })
+
             const statusUpdateEvent = new CustomEvent('actividadStatusUpdated', {
                 detail: {
                     actividadId: activity.id,
@@ -227,7 +227,7 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
                 const docs = allDocs.filter(doc => doc.idActividades === activity.id || doc.actividad?.id === activity.id);
                 if (isMounted) {
                     setDocumentos(docs)
-                    console.log('📄 Documentos cargados:', docs.length);
+
                 }
             } catch (error) {
                 console.error('Error loading documents:', error)
@@ -249,7 +249,7 @@ export function ModalWithTabs({ children, activity, statusList: propStatusList, 
             const allDocs = await getDocumentos();
             const docs = allDocs.filter(doc => doc.idActividades === activity.id || doc.actividad?.id === activity.id);
             setDocumentos(docs)
-            console.log('📄 Documentos recargados:', docs.length);
+
         } catch (error) {
             console.error('Error loading documents:', error)
             setDocumentos([])

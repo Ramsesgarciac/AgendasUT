@@ -83,7 +83,7 @@ const getColorClasses = (color: Area["color"]) => {
 export default function ActivityDashboard() {
   // Hooks - cargar solo una vez
   const { areas, loading: areasLoading, error: areasError } = useAreas();
-  const { actividades, loading: actividadesLoading, error: actividadesError, createActividad } = useActividades();
+  const { createActividad } = useActividades(); // Solo necesitamos createActividad
   const { tipoActividades } = useTipoActividades();
   const { tipoAreas, loading: tipoAreasLoading, error: tipoAreasError } = useTipoAreas();
   const { createComentario } = useComentarios();
@@ -92,8 +92,8 @@ export default function ActivityDashboard() {
   const { user } = useAuth();
   const { createAcuseActividad } = useDocumentos(); // NUEVO: Hook para crear acuse
 
-  const loading = areasLoading || actividadesLoading || tipoAreasLoading;
-  const error = areasError || actividadesError || tipoAreasError;
+  const loading = areasLoading || tipoAreasLoading;
+  const error = areasError || tipoAreasError;
 
   // Estados
   const [selectedAreaIds, setSelectedAreaIds] = useState<number[]>([])
@@ -147,60 +147,32 @@ export default function ActivityDashboard() {
   useEffect(() => {
     // Solo inicializar una vez cuando tengamos los datos necesarios
     if (!tipoAreaInitialized.current && tipoAreas.length > 0 && areas.length > 0) {
-      console.log('🔍 DEBUG - Inicializando filtro de tipo de área');
-      console.log('👤 User areas:', user?.areas);
-      console.log('📋 All areas:', areas);
-      console.log('🏷️ Tipo areas:', tipoAreas);
-
       if (user && user.areas && user.areas.length > 0) {
         // Buscar el área completa del usuario en la lista de áreas para obtener su tipoArea
         const userAreaId = user.areas[0].id;
         const fullUserArea = areas.find(area => area.id === userAreaId);
 
-        console.log('🎯 User area ID:', userAreaId);
-        console.log('🎯 Full user area:', fullUserArea);
-
         if (fullUserArea && fullUserArea.tipoArea) {
-          console.log('✅ Setting tipoArea to:', fullUserArea.tipoArea.nombre, '(ID:', fullUserArea.tipoArea.id, ')');
           setSelectedTipoAreaId(fullUserArea.tipoArea.id);
           tipoAreaInitialized.current = true;
         } else if (selectedTipoAreaId === null) {
-          console.log('⚠️ No se encontró tipoArea en el área del usuario, usando primer tipoArea');
           setSelectedTipoAreaId(tipoAreas[0].id);
           tipoAreaInitialized.current = true;
         }
       } else if (selectedTipoAreaId === null) {
-        console.log('⚠️ No hay usuario o áreas de usuario, usando primer tipoArea');
         setSelectedTipoAreaId(tipoAreas[0].id);
         tipoAreaInitialized.current = true;
       }
     }
   }, [tipoAreas.length, areas.length, user, selectedTipoAreaId]); // Include all dependencies
 
-  // Memoización pesada - solo recalcular cuando cambian areas o actividades
-  const areasWithActivities = useMemo(() => {
-    if (!areas.length || !actividades.length) return areas;
-
-    return areas.map(area => ({
-      ...area,
-      activities: actividades
-        .filter(act => act.area.id === area.id)
-        .map(act => ({
-          ...act,
-          id: act.id.toString(),
-          subject: act.asunto,
-          date: act.fechaLimite.toString(),
-          // Ensure status is properly mapped, with fallback
-          status: act.status || statusList.find(s => s.id === (act as any).statusId) || { id: 1, nombre: "En Proceso" }
-        }))
-    }));
-  }, [areas, actividades, statusList]);
-
+  // Filtrar áreas por tipo
   const filteredAreasByTipo = useMemo(() => {
-    if (selectedTipoAreaId === null) return areasWithActivities;
-    return areasWithActivities.filter((area) => area.tipoArea?.id === selectedTipoAreaId);
-  }, [areasWithActivities, selectedTipoAreaId]);
+    if (selectedTipoAreaId === null) return areas;
+    return areas.filter((area) => area.tipoArea?.id === selectedTipoAreaId);
+  }, [areas, selectedTipoAreaId]);
 
+  // Filtrar áreas seleccionadas
   const filteredAreas = useMemo(() => {
     if (selectedAreaIds.length === 0) return [];
     return filteredAreasByTipo.filter((area) => selectedAreaIds.includes(area.id));
@@ -242,13 +214,13 @@ export default function ActivityDashboard() {
 
   const getSelectedAreasText = useCallback(() => {
     if (selectedAreaIds.length === 0) return "Ningún área seleccionada"
-    if (selectedAreaIds.length === areasWithActivities.length) return "Todas las áreas"
+    if (selectedAreaIds.length === filteredAreasByTipo.length) return "Todas las áreas"
     if (selectedAreaIds.length === 1) {
-      const area = areasWithActivities.find((a) => a.id === selectedAreaIds[0])
+      const area = filteredAreasByTipo.find((a) => a.id === selectedAreaIds[0])
       return area?.name || ""
     }
     return `${selectedAreaIds.length} áreas seleccionadas`
-  }, [selectedAreaIds, areasWithActivities]);
+  }, [selectedAreaIds, filteredAreasByTipo]);
 
   const handleInputChange = useCallback((field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -407,14 +379,14 @@ export default function ActivityDashboard() {
                 area={area}
                 formatDate={formatDate}
                 usuarios={usuarios}
-                actividades={actividades}
               />
             ))}
           </div>
+
         </div>
       </>
     );
-  }, [currentView, loading, error, selectedAreaIds, filteredAreas, formatDate, statusList, usuarios]);
+  }, [currentView, loading, error, selectedAreaIds, filteredAreas, formatDate, usuarios]);
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -544,7 +516,7 @@ export default function ActivityDashboard() {
                   </DialogTrigger>
                   <ActivityCreate
                     formData={formData}
-                    areasWithActivities={areasWithActivities}
+                    areasWithActivities={areas}
                     handleInputChange={handleInputChange}
                     handleSubmit={handleSubmit}
                     setIsModalOpen={setIsModalOpen}

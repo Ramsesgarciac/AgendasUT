@@ -8,11 +8,9 @@ export const getTipoActividades = async (): Promise<TipoActividad[]> => {
       'Content-Type': 'application/json',
     },
   });
-  console.log('Response status:', response.status);
   if (!response.ok) {
     throw new Error('Failed to fetch tipo actividades');
   }
   const data = await response.json();
-  console.log('Fetched data:', data);
   return data;
 };
