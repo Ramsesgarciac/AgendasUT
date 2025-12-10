@@ -193,7 +193,7 @@ export default function ActivityDashboard() {
       prev.includes(areaId) ? prev.filter((id) => id !== areaId) : [...prev, areaId]
     )
   }, []);
-
+  //com
   const handleSelectAll = useCallback(() => {
     setSelectedAreaIds(filteredAreasByTipo.map((area) => area.id))
   }, [filteredAreasByTipo]);
