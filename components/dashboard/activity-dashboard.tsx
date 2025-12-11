@@ -309,23 +309,32 @@ export default function ActivityDashboard() {
 
       // Cerrar modal y abrir diálogo de documento
       setIsModalOpen(false)
-      setCreatedActivityId(nuevaActividad.id);
-      setCreatedActivity(nuevaActividad);
-      setShowDocumentDialog(true);
-
-      // Resetear form
+      // ============================================
+      // FINALIZACIÓN
+      // ============================================
       setFormData({
+        area: "",
+        activityType: "",
         subject: "",
         descripcion: "",
-        area: "",
-        instanciaEmisora: "",
         instanciaReceptora: "",
+        instanciaEmisora: "",
         dueDate: "",
-        activityType: "",
         comment: "",
       })
+      setIsModalOpen(false)
 
-      console.log('🎉 Proceso completado exitosamente');
+      // Notificar a la tabla para que se actualice con actualización optimista
+      window.dispatchEvent(new CustomEvent('activity-created', {
+        detail: { areaId: payload.idArea, activity: nuevaActividad }
+      }));
+
+      // Si se requiere subir documento, abrir el diálogo
+      if (payload.tipoActividad === "Oficio") {
+        setCreatedActivityId(nuevaActividad.id)
+        setCreatedActivity(nuevaActividad)
+        setShowDocumentDialog(true)
+      }
 
     } catch (error) {
       console.error("❌ Error creando actividad:", error);
@@ -334,7 +343,7 @@ export default function ActivityDashboard() {
     } finally {
       setIsSubmitting(false)
     }
-  }, [formData, createActividad, areas, createComentario, createAcuseActividad, user, statusList]);
+  }, [createActividad, user, formData, areas, statusList, createAcuseActividad, createComentario]);
 
   const renderDashboardContent = useCallback(() => {
     if (currentView === "notes") return <Notes />

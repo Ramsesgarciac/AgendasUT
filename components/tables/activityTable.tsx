@@ -163,6 +163,60 @@ export function ActivityTable({ filteredAreas, formatDate, statusList, usuarios 
         onLoadMore: loadMore,
     })
 
+    // Escuchar eventos de actualización
+    React.useEffect(() => {
+        const handleActivityUpdate = async (event: Event) => {
+            const customEvent = event as CustomEvent
+            const { areaId, activity } = customEvent.detail || {}
+
+            if (!areaId) return
+
+            // Optimistic update: add new activity immediately if provided
+            if (activity && event.type === 'activity-created') {
+                setActividadesByArea(prev => ({
+                    ...prev,
+                    [areaId]: [activity, ...(prev[areaId] || [])]
+                }))
+            }
+
+            try {
+                // Recargar solo el área afectada (página 1)
+                const response = await actividadService.getActividadesByArea(areaId, 1, 15)
+
+                setActividadesByArea(prev => ({
+                    ...prev,
+                    [areaId]: response.data
+                }))
+
+                setPageByArea(prev => ({
+                    ...prev,
+                    [areaId]: 1
+                }))
+
+                setHasMoreByArea(prev => ({
+                    ...prev,
+                    [areaId]: response.meta.page < response.meta.totalPages
+                }))
+
+                // Si se agregó una actividad, es posible que ahora haya más datos globalmente
+                if (response.meta.page < response.meta.totalPages) {
+                    setHasMore(true)
+                }
+
+            } catch (error) {
+                console.error(`Error refreshing area ${areaId}:`, error)
+            }
+        }
+
+        window.addEventListener('activity-created', handleActivityUpdate)
+        window.addEventListener('activity-updated', handleActivityUpdate)
+
+        return () => {
+            window.removeEventListener('activity-created', handleActivityUpdate)
+            window.removeEventListener('activity-updated', handleActivityUpdate)
+        }
+    }, [])
+
     const getEffectiveActivity = (activity: any) => {
         const now = new Date()
         const deadline = new Date(activity.fechaLimite)
