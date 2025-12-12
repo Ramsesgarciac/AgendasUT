@@ -329,12 +329,10 @@ export default function ActivityDashboard() {
         detail: { areaId: payload.idArea, activity: nuevaActividad }
       }));
 
-      // Si se requiere subir documento, abrir el diálogo
-      if (payload.tipoActividad === "Oficio") {
-        setCreatedActivityId(nuevaActividad.id)
-        setCreatedActivity(nuevaActividad)
-        setShowDocumentDialog(true)
-      }
+      // Siempre abrir el diálogo de documentos para cualquier tipo de actividad
+      setCreatedActivityId(nuevaActividad.id)
+      setCreatedActivity(nuevaActividad)
+      setShowDocumentDialog(true)
 
     } catch (error) {
       console.error("❌ Error creando actividad:", error);
