@@ -208,12 +208,44 @@ export function ActivityTable({ filteredAreas, formatDate, statusList, usuarios 
             }
         }
 
+        const handleStatusUpdate = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            const { actividadId, fullActivity } = customEvent.detail || {};
+
+            if (!actividadId || !fullActivity) return;
+
+            setActividadesByArea(prev => {
+                const newState = { ...prev };
+
+                // Si la actividad tiene área definida, actualizamos solo esa lista
+                if (fullActivity.area && fullActivity.area.id) {
+                    const areaId = fullActivity.area.id;
+                    if (newState[areaId]) {
+                        newState[areaId] = newState[areaId].map(act =>
+                            act.id === actividadId ? fullActivity : act
+                        );
+                    }
+                } else {
+                    // Fallback: buscar en todas las áreas si no viene el área en el payload
+                    Object.keys(newState).forEach(areaIdKey => {
+                        const areaId = Number(areaIdKey);
+                        newState[areaId] = newState[areaId].map(act =>
+                            act.id === actividadId ? fullActivity : act
+                        );
+                    });
+                }
+                return newState;
+            });
+        };
+
         window.addEventListener('activity-created', handleActivityUpdate)
         window.addEventListener('activity-updated', handleActivityUpdate)
+        window.addEventListener('actividadStatusUpdated', handleStatusUpdate)
 
         return () => {
             window.removeEventListener('activity-created', handleActivityUpdate)
             window.removeEventListener('activity-updated', handleActivityUpdate)
+            window.removeEventListener('actividadStatusUpdated', handleStatusUpdate)
         }
     }, [])
 
